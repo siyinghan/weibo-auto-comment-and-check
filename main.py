@@ -9,11 +9,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 
-# 始发站:泸沽湖
-# link = "https://weibo.com/2172061270/MiUOYogZy#comment"
 link_num = 0
-user_list = {"汐琊": 26, "太阳": 26, "卷卷": 10, "温妹舔狗": 10}
-counts = {"12-10-泸沽湖": 0}
+account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
 
 
 class WeiboAuto:
@@ -28,12 +25,16 @@ class WeiboAuto:
         data["weibo_details"][num]["comment_count"] = count
         json.dump(data, open("data.json", "w"))
 
-    def generate_random_comment(self, random_filename):
+    def generate_random_comment(self, random_filename, count):
         items = open("{}.txt".format(random_filename)).read().splitlines()
         random_item = random.choice(items)
-        random_letters = "".join(random.choice(
-            string.ascii_lowercase) for x in range(10))
-        comment = random_item + " " + random_letters
+        random_letters = []
+        for i in range(4):
+            random_letters.append("".join(random.choice(string.ascii_lowercase) for x in range(4)))
+        comment = random_letters[0] + str(count) + random_item[:6] \
+                  + random_letters[1] + random_item[6:10] \
+                  + random_letters[2] + random_item[10:] \
+                  + " " + random_letters[3]
         return comment
 
     def activate_selenium_driver(self):
@@ -83,20 +84,34 @@ class WeiboAuto:
         sleep(5)
         # write and send comments
         for i in range(comments_number):
-            comment = driver.find_element(
-                by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[1]/div/textarea")
+            # exit if the stored cookies are expired
+            try:
+                comment = driver.find_element(
+                    by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[1]/div/textarea")
+            except Exception as e:
+                print("cookies are expired for {}".format(username))
+                print(e)
+                return
             submit = driver.find_element(
                 by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[3]/div/button")
-            count += 1
-            comment.clear()
-            comment.send_keys(str(count) + " " + self.generate_random_comment(random_filename))
+            # exit if the submitting is failed
+            if comment.get_attribute("value") != "":
+                return
+            comment.send_keys(self.generate_random_comment(random_filename, count))
             comment.send_keys(Keys.SPACE)
             submit.click()
+            count += 1
+            self.update_comment_count(link_num, count)
             sleep(3)
-        self.update_comment_count(link_num, count)
-        # like the recent comments
 
 
 weibo_auto = WeiboAuto()
-for item in user_list.items():
+for item in account_list.items():
     weibo_auto.login_and_send_comments(item[0], item[1], "表白")
+
+# weibo_auto.save_cookies("温妹舔狗")
+
+# account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
+# for item in account_list.items():
+#     if item[0] == "画画":
+#         weibo_auto.login_and_send_comments(item[0], item[1], "表白")
