@@ -67,10 +67,11 @@ class WeiboAuto:
         home_url = "https://weibo.com"
         weibo_url = self.get_comment_details(link_num)[0]
         count = self.get_comment_details(link_num)[1]
-        driver = self.activate_selenium_driver()
+        new_comment_count = 0
 
-        # home_url = "https://weibo.com/login.php"
+        driver = self.activate_selenium_driver()
         driver.get(home_url)
+
         # read cookies and login
         cookies = []
         with open("cookies_{}.txt".format(username), "r") as f:
@@ -82,6 +83,7 @@ class WeiboAuto:
         # go to the target weibo
         driver.get(weibo_url)
         sleep(5)
+
         # write and send comments
         for i in range(comments_number):
             # exit if the stored cookies are expired
@@ -89,29 +91,37 @@ class WeiboAuto:
                 comment = driver.find_element(
                     by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[1]/div/textarea")
             except Exception as e:
-                print("cookies are expired for {}".format(username))
+                print("Cookies cannot be found (or expired) for {}".format(username))
                 print(e)
                 return
             submit = driver.find_element(
                 by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[3]/div/button")
+
             # exit if the submitting is failed
             if comment.get_attribute("value") != "":
+                count -= 1
+                new_comment_count -= 1
+                self.update_comment_count(link_num, count)
+                print("Left comments {} times successfully for {}.".format(new_comment_count, username))
                 return
             comment.send_keys(self.generate_random_comment(random_filename, count))
             comment.send_keys(Keys.SPACE)
             submit.click()
             count += 1
+            new_comment_count += 1
             self.update_comment_count(link_num, count)
             sleep(3)
 
+        print("Left comments {} times successfully for {}.".format(new_comment_count, username))
+
 
 weibo_auto = WeiboAuto()
-for item in account_list.items():
-    weibo_auto.login_and_send_comments(item[0], item[1], "表白")
+# for item in account_list.items():
+#     weibo_auto.login_and_send_comments(item[0], item[1], "表白")
 
 # weibo_auto.save_cookies("温妹舔狗")
 
 # account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
-# for item in account_list.items():
-#     if item[0] == "画画":
-#         weibo_auto.login_and_send_comments(item[0], item[1], "表白")
+for item in account_list.items():
+    if item[0] == "卷卷":
+        weibo_auto.login_and_send_comments(item[0], item[1], "表白")
