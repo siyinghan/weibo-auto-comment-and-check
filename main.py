@@ -10,7 +10,8 @@ from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 
 link_num = 1
-account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
+# account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
+account_list = {"汐琊": 27, "太阳": 27}
 
 
 class WeiboAuto:
@@ -28,13 +29,14 @@ class WeiboAuto:
     def generate_random_comment(self, random_filename, count_num):
         items = open("{}.txt".format(random_filename)).read().splitlines()
         random_item = random.choice(items)
+        weibo_emoji = open("weibo_emoji.txt").read().splitlines()
+        random_emoji = random.choice(weibo_emoji)
         random_letters = []
         for i in range(4):
             random_letters.append("".join(random.choice(string.ascii_lowercase) for x in range(4)))
-        comment = random_letters[0] + str(count_num) + random_item[:6] \
-                  + random_letters[1] + random_item[6:10] \
-                  + random_letters[2] + random_item[10:] \
-                  + " " + random_letters[3]
+        comment = random_letters[0] + str(count_num) + random_emoji \
+                  + random_item[:6] + random_letters[1] + random_item[6:10] \
+                  + random_letters[2] + random_item[10:] + " " + random_letters[3]
         return comment
 
     def activate_selenium_driver(self):
@@ -91,7 +93,8 @@ class WeiboAuto:
                 comment = driver.find_element(
                     by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[1]/div/textarea")
             except Exception as e:
-                print("Cookies cannot be found (or expired) for {}, please log in again".format(username))
+                # cookies expired / close the window
+                # print("Cookies cannot be found (or expired) for {}, please log in again".format(username))
                 print(e)
                 return
             submit = driver.find_element(
@@ -111,8 +114,8 @@ class WeiboAuto:
             submit.click()
             total_count += 1
             new_comment_count += 1
+            self.update_comment_count(link_num, total_count)
             sleep(3)
-        self.update_comment_count(link_num, total_count)
         print("Left {} comments successfully for {}. Left {} comments totally."
               .format(new_comment_count, username, total_count))
 
@@ -125,5 +128,5 @@ for item in account_list.items():
 
 # account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
 # for item in account_list.items():
-#     if item[0] == "温妹舔狗":
+#     if item[0] == "卷卷":
 #         weibo_auto.login_and_send_comments(item[0], item[1], "表白")

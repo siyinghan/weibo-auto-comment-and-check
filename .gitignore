@@ -5,4 +5,5 @@
 .idea
 
 *.txt
+!weibo_emoji.txt
 data.json
