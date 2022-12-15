@@ -9,7 +9,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 
-link_num = 0
+link_num = 1
 account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
 
 
@@ -25,13 +25,13 @@ class WeiboAuto:
         data["weibo_details"][num]["comment_count"] = count
         json.dump(data, open("data.json", "w"))
 
-    def generate_random_comment(self, random_filename, count):
+    def generate_random_comment(self, random_filename, count_num):
         items = open("{}.txt".format(random_filename)).read().splitlines()
         random_item = random.choice(items)
         random_letters = []
         for i in range(4):
             random_letters.append("".join(random.choice(string.ascii_lowercase) for x in range(4)))
-        comment = random_letters[0] + str(count) + random_item[:6] \
+        comment = random_letters[0] + str(count_num) + random_item[:6] \
                   + random_letters[1] + random_item[6:10] \
                   + random_letters[2] + random_item[10:] \
                   + " " + random_letters[3]
@@ -66,7 +66,7 @@ class WeiboAuto:
     def login_and_send_comments(self, username, comments_number, random_filename):
         home_url = "https://weibo.com"
         weibo_url = self.get_comment_details(link_num)[0]
-        count = self.get_comment_details(link_num)[1]
+        total_count = self.get_comment_details(link_num)[1]
         new_comment_count = 0
 
         driver = self.activate_selenium_driver()
@@ -99,21 +99,22 @@ class WeiboAuto:
 
             # exit if the submitting is failed
             if comment.get_attribute("value") != "":
-                count -= 1
+                total_count -= 1
                 new_comment_count -= 1
-                self.update_comment_count(link_num, count)
+                self.update_comment_count(link_num, total_count)
                 print("Left comment failed, please try again later.\nLeft comments {} times successfully for {}."
                       .format(new_comment_count, username))
                 return
-            comment.send_keys(self.generate_random_comment(random_filename, count))
+            # write comment in the textarea
+            comment.send_keys(self.generate_random_comment(random_filename, total_count + 1))
             comment.send_keys(Keys.SPACE)
             submit.click()
-            count += 1
+            total_count += 1
             new_comment_count += 1
             sleep(3)
-        self.update_comment_count(link_num, count)
+        self.update_comment_count(link_num, total_count)
         print("Left {} comments successfully for {}. Left {} comments totally."
-              .format(new_comment_count, username, count - 1))
+              .format(new_comment_count, username, total_count))
 
 
 weibo_auto = WeiboAuto()
@@ -124,5 +125,5 @@ for item in account_list.items():
 
 # account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
 # for item in account_list.items():
-#     if item[0] == "卷卷":
+#     if item[0] == "温妹舔狗":
 #         weibo_auto.login_and_send_comments(item[0], item[1], "表白")
