@@ -91,7 +91,7 @@ class WeiboAuto:
                 comment = driver.find_element(
                     by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[1]/div/textarea")
             except Exception as e:
-                print("Cookies cannot be found (or expired) for {}".format(username))
+                print("Cookies cannot be found (or expired) for {}, please log in again".format(username))
                 print(e)
                 return
             submit = driver.find_element(
@@ -102,26 +102,27 @@ class WeiboAuto:
                 count -= 1
                 new_comment_count -= 1
                 self.update_comment_count(link_num, count)
-                print("Left comments {} times successfully for {}.".format(new_comment_count, username))
+                print("Left comment failed, please try again later.\nLeft comments {} times successfully for {}."
+                      .format(new_comment_count, username))
                 return
             comment.send_keys(self.generate_random_comment(random_filename, count))
             comment.send_keys(Keys.SPACE)
             submit.click()
             count += 1
             new_comment_count += 1
-            self.update_comment_count(link_num, count)
             sleep(3)
-
-        print("Left comments {} times successfully for {}.".format(new_comment_count, username))
+        self.update_comment_count(link_num, count)
+        print("Left {} comments successfully for {}. Left {} comments totally."
+              .format(new_comment_count, username, count - 1))
 
 
 weibo_auto = WeiboAuto()
-# for item in account_list.items():
-#     weibo_auto.login_and_send_comments(item[0], item[1], "表白")
+for item in account_list.items():
+    weibo_auto.login_and_send_comments(item[0], item[1], "表白")
 
-# weibo_auto.save_cookies("温妹舔狗")
+# weibo_auto.save_cookies("太阳")
 
 # account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
-for item in account_list.items():
-    if item[0] == "卷卷":
-        weibo_auto.login_and_send_comments(item[0], item[1], "表白")
+# for item in account_list.items():
+#     if item[0] == "卷卷":
+#         weibo_auto.login_and_send_comments(item[0], item[1], "表白")
