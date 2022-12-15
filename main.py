@@ -10,8 +10,8 @@ from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 
 link_num = 1
-# account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
-account_list = {"汐琊": 27, "太阳": 27}
+account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
+account_list1 = {"汐琊": 27, "太阳": 27}
 
 
 class WeiboAuto:
@@ -65,7 +65,7 @@ class WeiboAuto:
             cookies_file.write(str(i))
             cookies_file.write("\n")
 
-    def send_comments_and_like(self, username, comments_number, random_filename):
+    def send_comments_and_like(self, username, comments_number, random_filename, like=True):
         home_url = "https://weibo.com"
         weibo_url = self.get_comment_details(link_num)[0]
         total_count = self.get_comment_details(link_num)[1]
@@ -116,28 +116,29 @@ class WeiboAuto:
             new_comment_count += 1
             self.update_comment_count(link_num, total_count)
             sleep(3)
-            # like the comment
-            # continue the comments if like is unclickable
-            try:
-                like = driver.find_element(
-                    by=By.XPATH,
-                    value="//*[@id='scroller']/div[1]/div[1]/div/div/div/div[1]/div[2]/div[2]/div[2]/div[4]/button")
-                like.click()
-            except Exception as e:
-                print("Like is unclickable.")
-                print(e)
+            if like:
+                # like the comment
+                # continue the comments if like is unclickable
+                try:
+                    like = driver.find_element(
+                        by=By.XPATH,
+                        value="//*[@id='scroller']/div[1]/div[1]/div/div/div/div[1]/div[2]/div[2]/div[2]/div[4]/button")
+                    like.click()
+                except Exception as e:
+                    print("Like is unclickable.")
+                    print(e)
             sleep(2)
         print("Left {} comments successfully for {}. Left {} comments totally."
               .format(new_comment_count, username, total_count))
 
 
 weibo_auto = WeiboAuto()
-# for item in account_list.items():
-#     weibo_auto.send_comments_and_like(item[0], item[1], "表白")
+for item in account_list1.items():
+    weibo_auto.send_comments_and_like(item[0], item[1], "表白")
 
 # weibo_auto.save_cookies("太阳")
 
 # account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
-for item in account_list.items():
-    if item[0] == "太阳":
-        weibo_auto.send_comments_and_like(item[0], item[1], "表白")
+# for item in account_list.items():
+#     if item[0] == "卷卷":
+#         weibo_auto.send_comments_and_like(item[0], item[1], "表白", False)
