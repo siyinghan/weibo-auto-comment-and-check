@@ -94,7 +94,7 @@ class WeiboAuto:
                     by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[1]/div/textarea")
             except Exception as e:
                 # cookies expired / close the window
-                # print("Cookies cannot be found (or expired) for {}, please log in again.".format(username))
+                print("Cookies cannot be found (or expired) for {}, please log in again.".format(username))
                 print(e)
                 return
             submit = driver.find_element(
