@@ -9,9 +9,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 
-link_num = 1
-account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
-account_list1 = {"汐琊": 27, "太阳": 27}
+link_index = 3
+account_list = {"汐琊": 20, "太阳": 20, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
+account_list1 = {"汐琊": 27, "太阳": 27, "温妹舔狗": 9}
 
 
 class WeiboAuto:
@@ -67,8 +67,8 @@ class WeiboAuto:
 
     def send_comments_and_like(self, username, comments_number, random_filename, like=True):
         home_url = "https://weibo.com"
-        weibo_url = self.get_comment_details(link_num)[0]
-        total_count = self.get_comment_details(link_num)[1]
+        weibo_url = self.get_comment_details(link_index)[0]
+        total_count = self.get_comment_details(link_index)[1]
         new_comment_count = 0
 
         driver = self.activate_selenium_driver()
@@ -104,7 +104,7 @@ class WeiboAuto:
             if comment.get_attribute("value") != "":
                 total_count -= 1
                 new_comment_count -= 1
-                self.update_comment_count(link_num, total_count)
+                self.update_comment_count(link_index, total_count)
                 print("Left comment failed, please try again later.\nLeft comments {} times successfully for {}."
                       .format(new_comment_count, username))
                 return
@@ -114,7 +114,7 @@ class WeiboAuto:
             submit.click()
             total_count += 1
             new_comment_count += 1
-            self.update_comment_count(link_num, total_count)
+            self.update_comment_count(link_index, total_count)
             sleep(3)
             if like:
                 # like the comment
@@ -133,12 +133,14 @@ class WeiboAuto:
 
 
 weibo_auto = WeiboAuto()
+
 for item in account_list1.items():
     weibo_auto.send_comments_and_like(item[0], item[1], "表白")
 
-# weibo_auto.save_cookies("太阳")
+# weibo_auto.save_cookies("卷卷")
 
 # account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
+
 # for item in account_list.items():
-#     if item[0] == "卷卷":
+#     if item[0] == "汐琊":
 #         weibo_auto.send_comments_and_like(item[0], item[1], "表白", False)

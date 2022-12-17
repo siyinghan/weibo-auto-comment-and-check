@@ -4,6 +4,5 @@
 # IntelliJ IDEA
 .idea
 
-*.txt
-!weibo_emoji.txt
+cookies_*.txt
 data.json
