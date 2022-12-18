@@ -10,7 +10,7 @@ from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 
 link_index = 3
-account_list = {"汐琊": 20, "太阳": 20, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
+account_list = {"汐琊": 20, "太阳": 16, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
 account_list1 = {"汐琊": 20, "太阳": 16, "温妹舔狗": 9}
 
 
@@ -59,11 +59,10 @@ class WeiboAuto:
         sleep(20)
         # get cookies and save in the file
         cookies = driver.get_cookies()
+        json_cookies = json.dumps(cookies)
         # will create a new cookies_username.txt file if not exist
         cookies_file = open("cookies_{}.txt".format(username), "w")
-        for i in cookies:
-            cookies_file.write(str(i))
-            cookies_file.write("\n")
+        cookies_file.write(json_cookies)
 
     def send_comments_and_like(self, username, comments_number, random_filename, like=True):
         home_url = "https://weibo.com"
@@ -77,11 +76,20 @@ class WeiboAuto:
         # read cookies and login
         cookies = []
         with open("cookies_{}.txt".format(username), "r") as f:
-            for i in f:
-                cookies.append(eval(i.strip()))
-        for i in cookies:
-            driver.add_cookie(i)
-        sleep(8)
+            cookies = json.loads(f.read())
+        for cookie in cookies:
+            cookie_dict = {
+                # "domain": ".weibo.com",
+                "name": cookie.get("name"),
+                "value": cookie.get("value"),
+                "expires": "",
+                # "path": "/",
+                # "httpOnly": False,
+                # "HostOnly": False,
+                # "Secure": False
+            }
+            driver.add_cookie(cookie_dict)
+        sleep(6)
         # go to the target weibo
         driver.get(weibo_url)
         sleep(4)
@@ -134,13 +142,13 @@ class WeiboAuto:
 
 weibo_auto = WeiboAuto()
 
-for item in account_list1.items():
-    weibo_auto.send_comments_and_like(item[0], item[1], "表白")
+# for item in account_list1.items():
+#     weibo_auto.send_comments_and_like(item[0], item[1], "表白")
 
-# weibo_auto.save_cookies("温妹舔狗")
+# weibo_auto.save_cookies("画画")
 
 # account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
 
-# for item in account_list.items():
-#     if item[0] == "汐琊":
-#         weibo_auto.send_comments_and_like(item[0], item[1], "表白")
+for item in account_list.items():
+    if item[0] == "汐琊":
+        weibo_auto.send_comments_and_like(item[0], item[1], "表白")
