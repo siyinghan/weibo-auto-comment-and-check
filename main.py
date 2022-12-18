@@ -11,7 +11,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 link_index = 3
 account_list = {"汐琊": 20, "太阳": 20, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
-account_list1 = {"汐琊": 20, "温妹舔狗": 9}
+account_list1 = {"汐琊": 20, "太阳": 16, "温妹舔狗": 9}
 
 
 class WeiboAuto:
@@ -134,13 +134,13 @@ class WeiboAuto:
 
 weibo_auto = WeiboAuto()
 
-# for item in account_list.items():
-#     weibo_auto.send_comments_and_like(item[0], item[1], "表白")
+for item in account_list1.items():
+    weibo_auto.send_comments_and_like(item[0], item[1], "表白")
 
 # weibo_auto.save_cookies("温妹舔狗")
 
 # account_list = {"汐琊": 27, "太阳": 27, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
 
-for item in account_list.items():
-    if item[0] == "汐琊":
-        weibo_auto.send_comments_and_like(item[0], item[1], "表白")
+# for item in account_list.items():
+#     if item[0] == "汐琊":
+#         weibo_auto.send_comments_and_like(item[0], item[1], "表白")
