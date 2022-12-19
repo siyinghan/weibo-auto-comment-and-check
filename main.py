@@ -61,7 +61,7 @@ class WeiboAuto:
         cookies = driver.get_cookies()
         json_cookies = json.dumps(cookies)
         # will create a new cookies_username.txt file if not exist
-        cookies_file = open("cookies_{}.txt".format(username), "w")
+        cookies_file = open("cookies/cookies_{}.txt".format(username), "w")
         cookies_file.write(json_cookies)
 
     def send_comments_and_like(self, username, comments_number, random_filename, like=True):
@@ -75,7 +75,7 @@ class WeiboAuto:
 
         # read cookies and login
         try:
-            with open("cookies_{}.txt".format(username), "r") as f:
+            with open("cookies/cookies_{}.txt".format(username), "r") as f:
                 cookies = json.loads(f.read())
             for cookie in cookies:
                 cookie_dict = {
