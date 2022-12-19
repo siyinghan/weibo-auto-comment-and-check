@@ -74,21 +74,24 @@ class WeiboAuto:
         driver.get(home_url)
 
         # read cookies and login
-        cookies = []
-        with open("cookies_{}.txt".format(username), "r") as f:
-            cookies = json.loads(f.read())
-        for cookie in cookies:
-            cookie_dict = {
-                # "domain": ".weibo.com",
-                "name": cookie.get("name"),
-                "value": cookie.get("value"),
-                "expires": "",
-                # "path": "/",
-                # "httpOnly": False,
-                # "HostOnly": False,
-                # "Secure": False
-            }
-            driver.add_cookie(cookie_dict)
+        try:
+            with open("cookies_{}.txt".format(username), "r") as f:
+                cookies = json.loads(f.read())
+            for cookie in cookies:
+                cookie_dict = {
+                    # "domain": ".weibo.com",
+                    "name": cookie.get("name"),
+                    "value": cookie.get("value"),
+                    # "expires": "",
+                    # "path": "/",
+                    # "httpOnly": False,
+                    # "HostOnly": False,
+                    # "Secure": False
+                }
+                driver.add_cookie(cookie_dict)
+        except Exception as e:
+            print("Please log in for {}.".format(username))
+            print(e)
         sleep(6)
         # go to the target weibo
         driver.get(weibo_url)
@@ -102,7 +105,7 @@ class WeiboAuto:
                     by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[1]/div/textarea")
             except Exception as e:
                 # cookies expired / close the window
-                print("Cookies cannot be found (or expired) for {}, please log in again.".format(username))
+                print("Please log in again for {}.".format(username))
                 print(e)
                 return
             submit = driver.find_element(
