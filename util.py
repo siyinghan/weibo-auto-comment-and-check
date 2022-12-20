@@ -16,10 +16,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 def save_cookies(username):
     """Save login information for Weibo Users."""
-    login_url = "https://weibo.com/login.php"
     driver = activate_selenium_driver()
     driver.implicitly_wait(10)
-    driver.get(login_url)
+    driver.get("https://weibo.com/login.php")
     driver.find_element(
         by=By.XPATH, value="//*[@id='pl_login_form']/div/div[1]/a").click()
     sleep(0.5)
