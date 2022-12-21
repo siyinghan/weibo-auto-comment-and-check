@@ -27,11 +27,11 @@ def save_cookies(username):
     # wait for 20s for scanning and login
     sleep(20)
     # get cookies and save in the file
-    cookies = driver.get_cookies()
-    json_cookies = json.dumps(cookies)
-    # will create a new cookies_username.txt file if not exist
-    cookies_file = open("cookies/cookies_{}.txt".format(username), "w")
-    cookies_file.write(json_cookies)
+    all_cookies = driver.get_cookies()
+    cookies = {}
+    for item in all_cookies:
+        cookies[item["name"]] = item["value"]
+        json.dump(cookies, open("cookies/cookies_{}.json".format(username), "w"))
 
 
 def send_comments_and_like(link_index, username, comments_number, random_filename, like=True):
@@ -46,20 +46,14 @@ def send_comments_and_like(link_index, username, comments_number, random_filenam
 
     # read cookies and login
     try:
-        with open("cookies/cookies_{}.txt".format(username), "r") as f:
-            cookies = json.loads(f.read())
+        cookies = json.load(open("cookies/cookies_{}.json".format(username), "r"))
         for cookie in cookies:
-            cookie_dict = {
-                # "domain": ".weibo.com",
-                "name": cookie.get("name"),
-                "value": cookie.get("value"),
-                # "expires": "",
-                # "path": "/",
-                # "httpOnly": False,
-                # "HostOnly": False,
-                # "Secure": False
-            }
-            driver.add_cookie(cookie_dict)
+            driver.add_cookie({
+                "domain": ".weibo.com",
+                "name": cookie,
+                "value": cookies[cookie],
+                "path": "/",
+            })
     except Exception as e:
         print("Please log in for {}.".format(username))
         print(e)
