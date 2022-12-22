@@ -4,7 +4,7 @@ Login with different Weibo users.
 from util import save_cookies, send_comments_and_like
 
 account_list = {"汐琊": 20, "太阳": 20, "卷卷": 9, "温妹舔狗": 9, "画画": 9}
-account_list1 = {"汐琊": 20, "太阳": 20, "卷卷": 9}
+account_list1 = {"汐琊": 20, "太阳": 18}
 
 for item in account_list1.items():
     send_comments_and_like(4, item[0], item[1], "表白")
