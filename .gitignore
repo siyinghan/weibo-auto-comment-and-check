@@ -4,6 +4,6 @@
 # IntelliJ IDEA
 .idea
 
-cookies_*.txt
+*.json
 *.md
 !README.md
