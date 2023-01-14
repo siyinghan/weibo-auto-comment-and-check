@@ -15,9 +15,9 @@ from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-def save_cookies(username):
+def save_cookies(username, profile):
     """Save login information for Weibo Users."""
-    driver = activate_selenium_driver()
+    driver = activate_selenium_driver(profile)
     driver.implicitly_wait(10)
     driver.get("https://weibo.com/login.php")
     driver.find_element(
@@ -27,41 +27,19 @@ def save_cookies(username):
         by=By.XPATH, value="//*[@id='pl_login_form']/div/div[1]/a").click()
     # wait for 20s for scanning and login
     sleep(20)
-    # get cookies and save in the file
-    all_cookies = driver.get_cookies()
-    cookies = {}
-    for item in all_cookies:
-        cookies[item["name"]] = item["value"]
-        json.dump(cookies, open("cookies/cookies_{}.json".format(username), "w"))
 
 
-def send_comments_and_like(link_index, username, comments_number, random_filename, like=True):
+def send_comments_and_like(link_index, username, profile, comments_number, random_filename, like=True):
     """Submit comments and click LIKE for each submitted comment."""
-    home_url = "https://weibo.com"
     weibo_url = get_comment_details(link_index)[0]
     total_count = get_comment_details(link_index)[1]
     new_comment_count = 0
 
-    driver = activate_selenium_driver()
-    driver.get(home_url)
-
-    # read cookies and login
-    try:
-        cookies = json.load(open("cookies/cookies_{}.json".format(username), "r"))
-        for cookie in cookies:
-            driver.add_cookie({
-                "name": cookie,
-                "value": cookies[cookie],
-            })
-    except Exception as e:
-        print("Please log in for {}.".format(username))
-        print(e)
-    sleep(6)
-    # go to the target weibo
+    driver = activate_selenium_driver(profile)
     driver.get(weibo_url)
     sleep(4)
 
-    # send comments and like
+    # send comments and likea
     for i in range(comments_number):
         # exit if the stored cookies are expired
         try:
@@ -108,11 +86,11 @@ def send_comments_and_like(link_index, username, comments_number, random_filenam
 
 
 # unfinished
-def extract_links_report_user(username, link):
+def extract_links_report_user(username, profile, link):
     """xxxx"""
     home_url = "https://weibo.com"
 
-    driver = activate_selenium_driver()
+    driver = activate_selenium_driver(profile)
     driver.get(home_url)
 
     # read cookies and login
@@ -148,11 +126,11 @@ def extract_links_report_user(username, link):
         sleep(3)
 
 
-def activate_selenium_driver():
+def activate_selenium_driver(profile):
     """Activate Selenium driver."""
     options = webdriver.ChromeOptions()
-    options.add_argument(r'--user-data-dir=~/Library/Application Support/Google/Chrome')
-    options.add_argument('--profile-directory=Default')
+    options.add_argument(r"--user-data-dir=~/Library/Application Support/Google/Chrome")
+    options.add_argument("--profile-directory={}".format(profile))
     driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
     driver.set_window_size(1600, 1000)
     # driver.maximize_window()
