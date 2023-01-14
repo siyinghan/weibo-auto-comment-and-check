@@ -8,6 +8,7 @@ import string
 from time import sleep
 
 from selenium import webdriver
+from selenium.webdriver import ActionChains
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -49,10 +50,8 @@ def send_comments_and_like(link_index, username, comments_number, random_filenam
         cookies = json.load(open("cookies/cookies_{}.json".format(username), "r"))
         for cookie in cookies:
             driver.add_cookie({
-                "domain": ".weibo.com",
                 "name": cookie,
                 "value": cookies[cookie],
-                "path": "/",
             })
     except Exception as e:
         print("Please log in for {}.".format(username))
@@ -108,9 +107,53 @@ def send_comments_and_like(link_index, username, comments_number, random_filenam
           .format(new_comment_count, username, total_count))
 
 
+# unfinished
+def extract_links_report_user(username, link):
+    """xxxx"""
+    home_url = "https://weibo.com"
+
+    driver = activate_selenium_driver()
+    driver.get(home_url)
+
+    # read cookies and login
+    try:
+        cookies = json.load(open("cookies/cookies_{}.json".format(username), "r"))
+        for cookie in cookies:
+            driver.add_cookie({
+                "domain": ".weibo.com",
+                "name": cookie,
+                "value": cookies[cookie],
+                "path": "/",
+            })
+    except Exception as e:
+        print("Please log in for {}.".format(username))
+        print(e)
+    sleep(6)
+    # go to the target weibo
+    driver.get(link)
+    sleep(4)
+
+    elements = driver \
+        .find_element(by=By.CLASS_NAME, value="WB_editor_iframe_new") \
+        .find_elements(By.TAG_NAME, "a")
+    count_links = 0
+    for e in elements:
+        # open the links in new tabs
+        ActionChains(driver).move_to_element(e).key_down(Keys.COMMAND).click(e).key_up(Keys.COMMAND).perform()
+        count_links += 1
+        sleep(0.5)
+    for i in range(count_links):
+        driver.switch_to.window(driver.window_handles[i + 1])
+        driver.close()
+        sleep(3)
+
+
 def activate_selenium_driver():
     """Activate Selenium driver."""
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()))
+    options = webdriver.ChromeOptions()
+    options.add_argument(r'--user-data-dir=~/Library/Application Support/Google/Chrome')
+    options.add_argument('--profile-directory=Default')
+    driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
     driver.set_window_size(1600, 1000)
     # driver.maximize_window()
     return driver
