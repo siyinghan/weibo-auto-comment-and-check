@@ -39,7 +39,7 @@ def send_comments_and_like(link_index, username, profile, comments_number, rando
     driver.get(weibo_url)
     sleep(4)
 
-    # send comments and likea
+    # send comments and click like
     for i in range(comments_number):
         # exit if the stored cookies are expired
         try:
