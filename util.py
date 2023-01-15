@@ -158,10 +158,12 @@ def generate_random_comment(random_filename, count_num):
     random_item = random.choice(items)
     weibo_emoji = open("weibo_emoji.txt").read().splitlines()
     random_emoji = random.choice(weibo_emoji)
+    random_num = random.randint(1, 10)
+    # generate random four letters 3 times, 1 put at the beginning, 2 put after a {random_num} words, 3 put at the end
     random_letters = []
-    for i in range(4):
+    for i in range(3):
         random_letters.append("".join(random.choice(string.ascii_lowercase) for x in range(4)))
     comment = random_letters[0] + str(count_num) + random_emoji \
-              + random_item[:6] + random_letters[1] + random_item[6:10] \
-              + random_letters[2] + random_item[10:] + " " + random_letters[3]
+              + random_item[:random_num] + random_letters[1] \
+              + random_item[random_num:] + " " + random_letters[2]
     return comment
