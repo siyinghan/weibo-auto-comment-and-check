@@ -4,18 +4,19 @@ Login with different Weibo users.
 from util import save_cookies, send_comments_and_like
 
 account_list = {
-    "汐琊": ["Default", 26],
+    "汐琊": ["Default", 20],
     "太阳": ["Profile 7", 20],
     "卷卷": ["Profile 8", 9],
     "温妹舔狗": ["Profile 9", 9],
     "画画": ["Profile 10", 9],
 }
 
-user = ["汐琊", "太阳", "温妹舔狗"]
+# user = ["汐琊", "太阳", "温妹舔狗"]
+user = ["汐琊"]
 
 for key, value in account_list.items():
     if key in user:
-        send_comments_and_like(5, key, value[0], value[1], "表白")
+        send_comments_and_like(5, key, value[0], value[1], "表白", False)
 
 # save_cookies(user, account_list[user][0])
 
