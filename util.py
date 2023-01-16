@@ -53,6 +53,10 @@ def send_comments_and_like(link_index, username, profile, comments_number, rando
         submit = driver.find_element(
             by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[3]/div/button")
 
+        # clear the remaining texts before starting a new loop
+        if new_comment_count == 0:
+            comment.clear()
+
         # exit if the submitting is failed
         if comment.get_attribute("value") != "":
             total_count -= 1
