@@ -11,7 +11,9 @@
     $ open ~/Library/Application\ Support/Google/Chrome
     ```
 
-3. Add the profile name in `login.py` and run ```python login.py``` to save the login information.
+3. Add the profile name in `login.py` and run ```python login.py```.
+
+4. Scan the QR code in the automated browser to save the login information.
 
 ### Create accounts information file
 
@@ -86,7 +88,7 @@ options.add_argument("--profile-directory={}".format(profile))
 driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
 ```
 
-Another way is to export and save cookies after scanning, then import cookies to the websites the next time.
+Another way is to export and save cookies after scanning the QR code, then import cookies to the websites the next time.
 
 Sadly, the cookies should be updated every 24h in this way.
 
