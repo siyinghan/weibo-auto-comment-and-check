@@ -87,7 +87,8 @@ driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager()
 ```
 
 Here is another way: export and save cookies after scanning, then import cookies to the websites the next time.
-The cookies should be updated every 24h in this way.
+
+Sadly, the cookies should be updated every 24h in this way.
 
 ```python
 import json
