@@ -86,7 +86,7 @@ options.add_argument("--profile-directory={}".format(profile))
 driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
 ```
 
-Here is another way: export and save cookies after scanning, then import cookies to the websites the next time.
+Another way is to export and save cookies after scanning, then import cookies to the websites the next time.
 
 Sadly, the cookies should be updated every 24h in this way.
 
