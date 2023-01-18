@@ -71,7 +71,7 @@
 ### Send comments and like
 
 1. Replace the account names (should be the same names as in `resources/accounts.json`)
-   in `main.py` *accounts = ["account 1", "account 2", "account 2"]*.
+   in `main.py` *accounts = ["account 1", "account 2", "account 3"]*.
 
 2. Start comments and like ```python main.py```.
 
