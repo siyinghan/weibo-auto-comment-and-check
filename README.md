@@ -6,12 +6,15 @@
 
 1. Create new profiles in Chrome manually.
 
-2. Open the Chrome folder to get the names of new profiles:
-    ```zsh
-    $ open ~/Library/Application\ Support/Google/Chrome
-    ```
+2. Open the Chrome folder to get the names of new profiles.
+   ```zsh
+   $ open ~/Library/Application\ Support/Google/Chrome
+   ```
 
-3. Add the profile name in `login.py` and run ```python login.py```.
+3. Add the profile name in `login.py` and run it.
+   ```zsh
+   $ python login.py
+   ```
 
 4. Scan the QR code in the automated browser to save the login information.
 
@@ -22,7 +25,7 @@
    $ touch resources/accounts.json
    ```
 
-2. Fill in the account names, the accordant profile names, 
+2. Fill in the account names, the accordant profile names,
    and the number that the account can comment (**20** in the example).
    ```json
    {
@@ -75,7 +78,10 @@
 1. Replace the account names (should be the same names as in `resources/accounts.json`)
    in `main.py` *accounts = ["account 1", "account 2", "account 3"]*.
 
-2. Start comments and like by running ```python main.py```.
+2. Start comments and like.
+   ```zsh
+   $ python main.py
+   ```
 
 ## Cookie Issue
 
