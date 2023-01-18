@@ -75,7 +75,7 @@
 
 2. Start comments and like by running ```python main.py```.
 
-## Cookie
+## Cookie Issue
 
 The Chrome profile (which can be added in Chrome manually) should be used to remain login.
 
