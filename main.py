@@ -1,23 +1,12 @@
 """
 Login with different Weibo users.
 """
-from util import save_cookies, send_comments_and_like
+import json
 
-account_list = {
-    "汐琊": ["Default", 20],
-    "太阳": ["Profile 7", 20],
-    "卷卷": ["Profile 8", 9],
-    "温妹舔狗": ["Profile 9", 9],
-    "画画": ["Profile 10", 9],
-}
+from util import send_comments_and_like
 
-# user = ["汐琊", "太阳", "温妹舔狗"]
-user = ["汐琊"]
+accounts = ["account 1", "account 2", "account 2"]
 
-for key, value in account_list.items():
-    if key in user:
-        send_comments_and_like(5, key, value[0], value[1], "表白", False)
-
-# save_cookies(user, account_list[user][0])
-
-# extract_links_report_user("太阳", "https://weibo.com/ttarticle/p/show?id=2309404848364541051167")
+for key, value in json.load(open("resources/accounts.json")).items():
+    if key in accounts:
+        send_comments_and_like(6, key, value[0], value[1])

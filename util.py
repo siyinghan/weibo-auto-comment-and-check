@@ -15,8 +15,8 @@ from selenium.webdriver.common.keys import Keys
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-def save_cookies(username, profile):
-    """Save login information for Weibo Users."""
+def login(profile):
+    """Save login information in Chrome profiles for Weibo Accounts."""
     driver = activate_selenium_driver(profile)
     driver.implicitly_wait(10)
     driver.get("https://weibo.com/login.php")
@@ -29,7 +29,7 @@ def save_cookies(username, profile):
     sleep(20)
 
 
-def send_comments_and_like(link_index, username, profile, comments_number, random_filename, like=True):
+def send_comments_and_like(link_index, account_name, profile, comments_number, like=True):
     """Submit comments and click LIKE for each submitted comment."""
     weibo_url = get_comment_details(link_index)[0]
     total_count = get_comment_details(link_index)[1]
@@ -47,7 +47,7 @@ def send_comments_and_like(link_index, username, profile, comments_number, rando
                 by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[1]/div/textarea")
         except Exception as e:
             # cookies expired / close the window
-            print("Please log in again for {}.".format(username))
+            print("Please log in again for {}.".format(account_name))
             print(e)
             return
         submit = driver.find_element(
@@ -63,10 +63,10 @@ def send_comments_and_like(link_index, username, profile, comments_number, rando
             new_comment_count -= 1
             update_comment_count(link_index, total_count)
             print("Left comment failed, please try again later.\nLeft comments {} times successfully for {}."
-                  .format(new_comment_count, username))
+                  .format(new_comment_count, account_name))
             return
         # write comment in the textarea
-        comment.send_keys(generate_random_comment(random_filename, total_count + 1))
+        comment.send_keys(generate_random_comment(total_count + 1))
         comment.send_keys(Keys.SPACE)
         submit.click()
         total_count += 1
@@ -86,48 +86,7 @@ def send_comments_and_like(link_index, username, profile, comments_number, rando
                 print(e)
         sleep(2)
     print("Left {} comments successfully for {}. Left {} comments totally."
-          .format(new_comment_count, username, total_count))
-
-
-# unfinished
-def extract_links_report_user(username, profile, link):
-    """xxxx"""
-    home_url = "https://weibo.com"
-
-    driver = activate_selenium_driver(profile)
-    driver.get(home_url)
-
-    # read cookies and login
-    try:
-        cookies = json.load(open("cookies/cookies_{}.json".format(username), "r"))
-        for cookie in cookies:
-            driver.add_cookie({
-                "domain": ".weibo.com",
-                "name": cookie,
-                "value": cookies[cookie],
-                "path": "/",
-            })
-    except Exception as e:
-        print("Please log in for {}.".format(username))
-        print(e)
-    sleep(6)
-    # go to the target weibo
-    driver.get(link)
-    sleep(4)
-
-    elements = driver \
-        .find_element(by=By.CLASS_NAME, value="WB_editor_iframe_new") \
-        .find_elements(By.TAG_NAME, "a")
-    count_links = 0
-    for e in elements:
-        # open the links in new tabs
-        ActionChains(driver).move_to_element(e).key_down(Keys.COMMAND).click(e).key_up(Keys.COMMAND).perform()
-        count_links += 1
-        sleep(0.5)
-    for i in range(count_links):
-        driver.switch_to.window(driver.window_handles[i + 1])
-        driver.close()
-        sleep(3)
+          .format(new_comment_count, account_name, total_count))
 
 
 def activate_selenium_driver(profile):
@@ -143,7 +102,7 @@ def activate_selenium_driver(profile):
 
 def get_comment_details(num):
     """Got the link and the total comments number of the target Weibo."""
-    data = json.load(open("data.json", "r"))
+    data = json.load(open("resources/data.json", "r"))
     link = data["weibo_details"][num]["link"]
     count = data["weibo_details"][num]["comment_count"]
     return [link, count]
@@ -151,18 +110,18 @@ def get_comment_details(num):
 
 def update_comment_count(num, count):
     """Update the total comments number of the target Weibo."""
-    data = json.load(open("data.json", "r"))
+    data = json.load(open("resources/data.json", "r"))
     data["weibo_details"][num]["comment_count"] = count
-    json.dump(data, open("data.json", "w"))
+    json.dump(data, open("resources/data.json", "w"))
 
 
-def generate_random_comment(random_filename, count_num):
+def generate_random_comment(count_num):
     """Generate comments with random letters and random emojis."""
-    items = open("{}.txt".format(random_filename)).read().splitlines()
+    items = open("resources/random_text.txt").read().splitlines()
     random_item = random.choice(items)
-    weibo_emoji = open("weibo_emoji.txt").read().splitlines()
+    weibo_emoji = open("resources/weibo_emoji.txt").read().splitlines()
     random_emoji = random.choice(weibo_emoji)
-    random_num = random.randint(1, 10)
+    random_num = random.randint(1, 12)
     # generate random four letters 3 times, 1 put at the beginning, 2 put after a {random_num} words, 3 put at the end
     random_letters = []
     for i in range(3):
