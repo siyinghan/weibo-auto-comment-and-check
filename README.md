@@ -20,16 +20,17 @@
    $ touch resources/accounts.json
    ```
 
-2. Fill in the account names, the accordant profile names, and the number that the account can comment.
+2. Fill in the account names, the accordant profile names, 
+   and the number that the account can comment (**20** in the example).
    ```json
    {
      "account name 1": [
        "profile name 1",
-       20 // number to comment and like
+       20
      ],
     "account name 2": [
        "profile name 2",
-       20 // number to comment and like
+       20
      ]
    }
    ```
