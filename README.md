@@ -28,7 +28,7 @@
        "profile name 1",
        20
      ],
-    "account name 2": [
+     "account name 2": [
        "profile name 2",
        20
      ]
