@@ -1,5 +1,5 @@
 """
-Login with different Weibo users.
+Login with different Weibo accounts.
 """
 import json
 
