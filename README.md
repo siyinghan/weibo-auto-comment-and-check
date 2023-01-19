@@ -20,7 +20,7 @@
 
 ### Create accounts information file
 
-1. Create an empty `json` file:
+1. Create an empty `json` file in the project **resources** folder:
    ```zsh
    $ touch resources/accounts.json
    ```
