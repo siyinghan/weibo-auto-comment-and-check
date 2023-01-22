@@ -9,4 +9,5 @@ accounts = ["account 1", "account 2", "account 3"]
 
 for key, value in json.load(open("resources/accounts.json")).items():
     if key in accounts:
-        send_comments_and_like(6, key, value[0], value[1])
+        # leave comments without clicking the LIKE button
+        send_comments_and_like(link_index=0, account_name=key, profile=value[0], comments_number=value[1], like=False)
