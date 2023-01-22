@@ -38,6 +38,9 @@ def send_comments_and_like(link_index, account_name, profile, comments_number, l
     driver.get(weibo_url)
     sleep(4)
 
+    print("Start leaving comments for {} from number {}..."
+          .format(account_name, total_count + 1))
+
     # send comments and click like
     for i in range(comments_number):
         # exit if the stored cookies are expired
@@ -61,8 +64,9 @@ def send_comments_and_like(link_index, account_name, profile, comments_number, l
             total_count -= 1
             new_comment_count -= 1
             update_comment_count(link_index, total_count)
-            print("Left comment failed, please try again later.\nLeft comments {} times successfully for {}."
-                  .format(new_comment_count, account_name))
+            print("Left comment failed, please try again later.\n"
+                  "Left comments {} times successfully for {}. Total comments number {}.\n"
+                  .format(new_comment_count, account_name, total_count))
             return
         # write comment in the textarea
         comment.send_keys(generate_random_comment(total_count + 1))
@@ -84,7 +88,7 @@ def send_comments_and_like(link_index, account_name, profile, comments_number, l
                 print("Like is unclickable.")
                 print(e)
         sleep(2)
-    print("Left {} comments successfully for {}. Left {} comments totally."
+    print("Left {} comments successfully for {}. Total comments number {}.\n"
           .format(new_comment_count, account_name, total_count))
 
 
