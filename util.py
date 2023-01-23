@@ -2,6 +2,7 @@
 Generate Weibo comments and submit.
 Click LIKE for each submitted comment.
 """
+import datetime
 import json
 import random
 import string
@@ -120,6 +121,7 @@ def update_comment_count(num, count):
 
 def generate_random_comment(count_num):
     """Generate comments with random letters and random emojis."""
+    timestamp = str(int(datetime.datetime.now().timestamp()))
     items = open("resources/random_text.txt").read().splitlines()
     random_item = random.choice(items)
     weibo_emoji = open("resources/weibo_emoji.txt").read().splitlines()
@@ -127,9 +129,9 @@ def generate_random_comment(count_num):
     random_num = random.randint(1, 12)
     # generate random four letters 3 times, 1 put at the beginning, 2 put after a {random_num} words, 3 put at the end
     random_letters = []
-    for i in range(3):
+    for i in range(2):
         random_letters.append("".join(random.choice(string.ascii_lowercase) for x in range(4)))
     comment = random_letters[0] + str(count_num) + random_emoji \
               + random_item[:random_num] + random_letters[1] \
-              + random_item[random_num:] + " " + random_letters[2]
+              + random_item[random_num:] + " " + timestamp
     return comment
