@@ -12,12 +12,14 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.firefox.service import Service as FirefoxService
 from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
 
 
 def login(profile):
     """Save login information in Chrome profiles for Weibo Accounts."""
-    driver = activate_selenium_driver(profile)
+    driver = activate_chrome_driver(profile)
     driver.implicitly_wait(10)
     driver.get("https://weibo.com/login.php")
     driver.find_element(
@@ -35,9 +37,9 @@ def send_comments_and_like(link_index, account_name, profile, comments_number, l
     total_count = get_comment_details(link_index)[1]
     new_comment_count = 0
 
-    driver = activate_selenium_driver(profile)
+    driver = activate_chrome_driver(profile)
     driver.get(weibo_url)
-    sleep(4)
+    sleep(2)
 
     print("Start leaving comments for {} from number {}..."
           .format(account_name, total_count + 1))
@@ -93,13 +95,46 @@ def send_comments_and_like(link_index, account_name, profile, comments_number, l
           .format(new_comment_count, account_name, total_count))
 
 
-def activate_selenium_driver(profile):
-    """Activate Selenium driver."""
+def check_comments(link_index):
+    """Check comments."""
+    weibo_url = get_comment_details(link_index)[0]
+
+    driver = activate_firefox_driver()
+    print("Firefox driver start...")
+    driver.get(weibo_url)
+    print("Firefox driver go to {}...".format(weibo_url))
+    sleep(10)
+
+    # check comments
+    # click "按时间"
+    driver.find_element(
+        by=By.XPATH,
+        value="//*[@id='app']/div[1]/div[2]/div[2]/main/div[1]/div/div[2]/div[2]/div[3]/div/div[1]/div/div[2]").click()
+    sleep(2)
+    if "xxx" in driver.page_source:
+        print("xxx exist")
+    else:
+        print("Cannot find the text.")
+    sleep(2)
+    # driver.close()
+
+
+def activate_chrome_driver(profile):
+    """Activate Selenium Chrome driver."""
     options = webdriver.ChromeOptions()
     options.add_argument(r"--user-data-dir=~/Library/Application Support/Google/Chrome")
     options.add_argument("--profile-directory={}".format(profile))
+    options.add_argument("--disable-extensions")
     driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
-    driver.set_window_size(1600, 1000)
+    driver.set_window_size(1400, 1000)
+    # driver.maximize_window()
+    return driver
+
+
+def activate_firefox_driver():
+    """Activate Selenium Firefox driver."""
+    driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()))
+    driver.set_window_size(1400, 1000)
     # driver.maximize_window()
     return driver
 
