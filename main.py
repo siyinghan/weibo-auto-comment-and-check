@@ -2,12 +2,22 @@
 Login with different Weibo accounts.
 """
 import json
+from multiprocessing import Pool
 
-from util import send_comments_and_like
+from util import send_comments_and_like, check_comments
 
-accounts = ["account 1", "account 2", "account 3"]
+# accounts = ["汐琊", "太阳", "温妹舔狗"]
+accounts = ["汐琊"]
 
-for key, value in json.load(open("resources/accounts.json")).items():
-    if key in accounts:
-        # leave comments without clicking the LIKE button
-        send_comments_and_like(link_index=0, account_name=key, profile=value[0], comments_number=value[1], like=False)
+if __name__ == "__main__":
+    pool = Pool(processes=2)
+    pool.apply_async(check_comments, args=(7,))
+
+    for key, value in json.load(open("resources/accounts.json")).items():
+        if key in accounts:
+            args = (7, key, value[0], value[1])
+            pool.apply_async(send_comments_and_like, args)
+            # sleep(10)
+
+    pool.close()
+    pool.join()
