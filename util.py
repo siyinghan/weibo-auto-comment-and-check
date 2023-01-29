@@ -3,6 +3,7 @@ Generate Weibo comments and submit.
 Click LIKE for each submitted comment.
 """
 import json
+import logging
 import random
 from datetime import datetime
 from string import ascii_lowercase
@@ -15,6 +16,15 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(threadName)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.FileHandler("log.log", "w"),
+        logging.StreamHandler()
+    ]
+)
 
 
 class CommentsService:
@@ -106,12 +116,12 @@ class SendComments(CommentsService):
         new_comment_count = 0
 
         driver = self.activate_chrome_driver()
-        print("========== Chrome Driver Activate ==========")
+        logging.info("====== Chrome driver activate ======")
         driver.get(weibo_url)
-        print(f"Chrome driver go to {weibo_url}.")
+        logging.info(f"Chrome driver go to {weibo_url}")
         sleep(2)
 
-        print(f"Start leaving comments for {self.account_name} from number {total_count + 1}...")
+        logging.info(f"Start leaving comments for {self.account_name} from number {total_count + 1}...")
 
         # send comments and click like
         with open("resources/accounts.json", "r") as json_file:
@@ -166,7 +176,7 @@ class SendComments(CommentsService):
               f"Total comments number {total_count}.\n")
 
         driver.close()
-        print("========== Chrome Driver Close ==========")
+        logging.info("====== Chrome Driver Close ======")
 
 
 class CheckComment(CommentsService):
@@ -187,7 +197,7 @@ class CheckComment(CommentsService):
         weibo_url = self.get_comment_details()[0]
 
         driver = self.activate_firefox_driver()
-        print("========== Firefox Driver Activate ==========")
+        print("====== Firefox driver activate ======")
         driver.get(weibo_url)
         print(f"Firefox driver go to {weibo_url}")
         sleep(10)
@@ -205,4 +215,4 @@ class CheckComment(CommentsService):
         sleep(2)
 
         driver.close()
-        print("========== Firefox Driver Close ==========")
+        print("====== Firefox Driver Close ======")
