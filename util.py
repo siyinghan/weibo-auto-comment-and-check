@@ -91,7 +91,7 @@ class CommentSender(CommentsService):
         super().__init__(account_name, weibo_details_index)
         self.driver = self.activate_chrome_driver()
 
-    def send_comment(self):
+    def send_and_like_comment(self):
         """Submit comments and click LIKE for each submitted comment."""
         weibo_url = self.get_comment_details()[0]
         total_count = self.get_comment_details()[1]
