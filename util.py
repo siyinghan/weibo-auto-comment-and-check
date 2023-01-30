@@ -78,7 +78,7 @@ class Login(CommentsService):
         sleep(0.5)
         driver.find_element(
             by=By.XPATH, value="//*[@id='pl_login_form']/div/div[1]/a").click()
-        # wait for 20s for scanning and login
+        # wait for scanning and login
         sleep(20)
 
 
@@ -87,17 +87,19 @@ class CommentSender(CommentsService):
     Send Weibo comments.
     """
 
-    def send_comments_and_like(self):
+    def __init__(self, account_name, weibo_details_index):
+        super().__init__(account_name, weibo_details_index)
+        self.driver = self.activate_chrome_driver()
+
+    def send_comment(self):
         """Submit comments and click LIKE for each submitted comment."""
         weibo_url = self.get_comment_details()[0]
         total_count = self.get_comment_details()[1]
         new_comment_count = 0
-        pre_comment_value = None
         like = True
 
-        driver = self.activate_chrome_driver()
         logger_comment_sender.info(f"Chrome driver activate for account {self.account_name}")
-        driver.get(weibo_url)
+        self.driver.get(weibo_url)
         logger_comment_sender.info(f"Chrome driver for account {self.account_name} arrive page {weibo_url}")
         sleep(2)
 
@@ -106,7 +108,7 @@ class CommentSender(CommentsService):
             comments_number = json.load(json_file)[self.account_name][1]
         for i in range(comments_number):
             try:
-                comment = driver.find_element(
+                comment = self.driver.find_element(
                     by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[1]/div/textarea")
                 # clear the remaining texts before starting a new loop
                 if i == 0 and comment.get_attribute("value"):
@@ -116,59 +118,62 @@ class CommentSender(CommentsService):
             except NoSuchElementException as e:
                 # cookies expired
                 logger_comment_sender.error(f"Please log in for account {self.account_name}")
-                driver.close()
-                logger_comment_sender.info(f"Chrome Driver Close for account {self.account_name}")
                 return None
-            submit = driver.find_element(
+            submit = self.driver.find_element(
                 by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[3]/div/button")
 
-            # exit if the submitting is failed
-            if comment.get_attribute("value"):
-                total_count -= 1
-                new_comment_count -= 1
+            comment.send_keys(comment_value)
+            comment.send_keys(Keys.SPACE)
+            submit.click()
+            sleep(1)
+            # check if comment submitted successfully
+            _ = self.driver.find_element(
+                by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[1]/div/textarea")
+            submit_flag = False if _.get_attribute("value") else True
+            # submission succeeded
+            if submit_flag:
+                total_count += 1
+                new_comment_count += 1
+                logger_comment_sender.info(f"Comment #{new_comment_count}: {comment_value}")
                 self.update_comment_count(total_count)
+                sleep(1)
+                if like:
+                    like = self.like_comment(new_comment_count)
+                    sleep(1)
+            # submission failed
+            else:
                 logger_comment_sender.error("Comment failed, please try again later")
                 logger_comment_sender.info(f"{new_comment_count} comments successfully for account "
                                            f"{self.account_name}. {total_count} total for this Weibo.")
                 return None
-
-            # log the comment info only after success submitting
-            if i > 0 and not comment.get_attribute("value"):
-                logger_comment_sender.info(f"Comment #{new_comment_count}: {pre_comment_value}")
-
-            # write comment in the textarea
-            logger_comment_sender.info(
-                f"Start leaving comments for account {self.account_name} from number {total_count + 1}...")
-            comment.send_keys(comment_value)
-            pre_comment_value = comment_value
-            comment.send_keys(Keys.SPACE)
-            submit.click()
-            total_count += 1
-            new_comment_count += 1
-            self.update_comment_count(total_count)
-            sleep(3)
-
-            if like:
-                # LIKE the comment
-                # continue the comments without clicking LIKE if it's unclickable
-                like_button = driver.find_element(
-                    by=By.XPATH,
-                    value="//*[@id='scroller']/div[1]/div[1]/div/div/div/div[1]/div[2]/div[2]/div[2]/div[4]/button")
-                like_button.click()
-                sleep(1)
-                try:
-                    like_button.find_element(by=By.CLASS_NAME, value="woo-like-an")
-                    logger_comment_sender.info(f"LIKE #{new_comment_count} succeeded")
-                except NoSuchElementException as e:
-                    # LIKE failed
-                    like = False
-                    logger_comment_sender.error(f"LIKE #{new_comment_count} failed")
-            sleep(2)
         logger_comment_sender.info(f"{new_comment_count} comments successfully for account "
                                    f"{self.account_name}. {total_count} total for this Weibo.")
 
-        driver.close()
-        logger_comment_sender.info(f"Chrome Driver Close for account {self.account_name}")
+    def like_comment(self, new_comment_count, like=True):
+        """LIKE the comment."""
+        like_button = self.driver.find_element(
+            by=By.XPATH,
+            value="//*[@id='scroller']/div[1]/div[1]/div/div/div/div[1]/div[2]/div[2]/div[2]/div[4]/button")
+        like_button.click()
+        sleep(1)
+        try:
+            like_button.find_element(by=By.CLASS_NAME, value="woo-like-an")
+            logger_comment_sender.info(f"LIKE #{new_comment_count}")
+        except NoSuchElementException as e:
+            # LIKE failed
+            like = False
+            logger_comment_sender.error(f"Failed to LIKE #{new_comment_count}")
+        finally:
+            return like
+
+    def update_comment_count(self, total_count):
+        """Update the total comments number of the target Weibo."""
+        with open("resources/data.json", "r", encoding="utf-8") as json_file:
+            data = json.load(json_file)
+        data["weibo_details"][self.weibo_details_index]["comments_count"] = total_count
+        with open("resources/data.json", "w", encoding="utf-8") as json_file:
+            # ensure Chinese characters and JSON format
+            json.dump(data, json_file, ensure_ascii=False, indent=2)
 
     @staticmethod
     def generate_random_comment(count_num):
@@ -183,17 +188,8 @@ class CommentSender(CommentsService):
         random_letters = []
         for i in range(2):
             random_letters.append("".join(random.choice(ascii_lowercase) for x in range(4)))
-        return f"{random_letters[0]}{count_num}{random_emoji}{random_item[:random_num]}" \
+        return f"{random_letters[0]}{count_num}{random_emoji}{random_item[:random_num]} " \
                f"{random_letters[1]}{random_item[random_num:]} {timestamp}"
-
-    def update_comment_count(self, total_count):
-        """Update the total comments number of the target Weibo."""
-        with open("resources/data.json", "r", encoding="utf-8") as json_file:
-            data = json.load(json_file)
-        data["weibo_details"][self.weibo_details_index]["comments_count"] = total_count
-        with open("resources/data.json", "w", encoding="utf-8") as json_file:
-            # ensure Chinese characters and JSON format
-            json.dump(data, json_file, ensure_ascii=False, indent=2)
 
 
 class CommentChecker(CommentsService):
