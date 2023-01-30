@@ -30,75 +30,82 @@ logger_comment_sender = logging.getLogger("CS")
 logger_comment_checker = logging.getLogger("CC")
 
 
-class CommentsService:
-    """
-    Methods for reusing.
-    """
-
-    def __init__(self, account_name, weibo_details_index):
-        self.account_name = account_name
-        self.weibo_details_index = weibo_details_index
-
-    def activate_chrome_driver(self):
-        """Activate Selenium Chrome driver."""
-        # get profile name
-        with open("resources/accounts.json", "r") as json_file:
-            profile = json.load(json_file)[self.account_name][0]
-        # set driver
-        options = webdriver.ChromeOptions()
-        options.add_argument(r"--user-data-dir=~/Library/Application Support/Google/Chrome")
-        options.add_argument(f"--profile-directory={profile}")
-        options.add_argument("--disable-extensions")
-        driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
-        driver.set_window_size(1400, 1000)
-        # driver.maximize_window()
-        return driver
-
-    def get_comment_details(self):
-        """Got the link and the total comments number of the target Weibo."""
-        with open("resources/data.json", "r") as json_file:
-            data = json.load(json_file)
-            link = data["weibo_details"][self.weibo_details_index]["link"]
-            count = data["weibo_details"][self.weibo_details_index]["comments_count"]
-        return [link, count]
+def get_comment_details(weibo_details_index):
+    """Got the link and the total comments number of the target Weibo."""
+    with open("resources/data.json", "r") as json_file:
+        data = json.load(json_file)
+        link = data["weibo_details"][weibo_details_index]["link"]
+        count = data["weibo_details"][weibo_details_index]["comments_count"]
+    return [link, count]
 
 
-class Login(CommentsService):
+def activate_chrome_driver(account_name):
+    """Activate Selenium Chrome driver."""
+    # get profile name
+    with open("resources/accounts.json", "r") as json_file:
+        profile = json.load(json_file)[account_name][0]
+    # set driver
+    options = webdriver.ChromeOptions()
+    options.add_argument(r"--user-data-dir=~/Library/Application Support/Google/Chrome")
+    options.add_argument(f"--profile-directory={profile}")
+    options.add_argument("--disable-extensions")
+    driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
+    driver.set_window_size(1400, 1000)
+    # driver.maximize_window()
+    logger_comment_sender.info(f"Chrome driver activate for account {account_name}")
+    return driver
+
+
+def activate_firefox_driver():
+    """Activate Selenium Firefox driver."""
+    driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()))
+    driver.set_window_size(1400, 1000)
+    # driver.maximize_window()
+    logger_comment_checker.info("Firefox driver activate")
+    return driver
+
+
+class Login:
     """
     Weibo login.
     """
 
+    def __init__(self, account_name):
+        self.account_name = account_name
+        self.driver = activate_chrome_driver(account_name)
+
     def login(self):
         """Save login information in Chrome profiles for Weibo Accounts."""
-        driver = self.activate_chrome_driver()
-        driver.implicitly_wait(10)
-        driver.get("https://weibo.com/login.php")
-        driver.find_element(
+        self.driver.implicitly_wait(10)
+        self.driver.get("https://weibo.com/login.php")
+        self.driver.find_element(
             by=By.XPATH, value="//*[@id='pl_login_form']/div/div[1]/a").click()
         sleep(0.5)
-        driver.find_element(
+        self.driver.find_element(
             by=By.XPATH, value="//*[@id='pl_login_form']/div/div[1]/a").click()
         # wait for scanning and login
         sleep(20)
 
 
-class CommentSender(CommentsService):
+class CommentSender:
     """
     Send Weibo comments.
     """
 
-    def __init__(self, account_name, weibo_details_index):
-        super().__init__(account_name, weibo_details_index)
-        self.driver = self.activate_chrome_driver()
+    def __init__(self, account_name, weibo_details_index, check_queue=None):
+        self.account_name = account_name
+        self.weibo_details_index = weibo_details_index
+        self.check_queue = check_queue
+        self.driver = activate_chrome_driver(account_name)
 
     def send_and_like_comment(self):
         """Submit comments and click LIKE for each submitted comment."""
-        weibo_url = self.get_comment_details()[0]
-        total_count = self.get_comment_details()[1]
+        weibo_url = get_comment_details(self.weibo_details_index)[0]
+        total_count = get_comment_details(self.weibo_details_index)[1]
         new_comment_count = 0
+        timestamp_list = list()
         like = True
 
-        logger_comment_sender.info(f"Chrome driver activate for account {self.account_name}")
         self.driver.get(weibo_url)
         logger_comment_sender.info(f"Chrome driver for account {self.account_name} arrive page {weibo_url}")
         sleep(2)
@@ -136,6 +143,11 @@ class CommentSender(CommentsService):
                 new_comment_count += 1
                 logger_comment_sender.info(f"Comment #{new_comment_count}: {comment_value}")
                 self.update_comment_count(total_count)
+                # save the timestamp to check if the comment is valid or not
+                timestamp_list.append(comment_value.split()[-1])
+                if len(timestamp_list) == 5:
+                    # TODO
+                    timestamp_list = list()
                 sleep(1)
                 if like:
                     like = self.like_comment(new_comment_count)
@@ -191,41 +203,40 @@ class CommentSender(CommentsService):
         return f"{random_letters[0]}{count_num}{random_emoji}{random_item[:random_num]} " \
                f"{random_letters[1]}{random_item[random_num:]} {timestamp}"
 
+    def to_check(self):
+        """Build a list of max 5 comments to be checked."""
+        # TODO
 
-class CommentChecker(CommentsService):
+
+class CommentChecker:
     """
     Check Weibo comments.
     """
 
-    @staticmethod
-    def activate_firefox_driver():
-        """Activate Selenium Firefox driver."""
-        driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()))
-        driver.set_window_size(1400, 1000)
-        # driver.maximize_window()
-        return driver
+    def __init__(self, weibo_details_index, check_queue=None):
+        self.weibo_details_index = weibo_details_index
+        self.check_queue = check_queue
+        self.driver = activate_firefox_driver()
 
     def check_comments(self):
         """Check comments."""
-        weibo_url = self.get_comment_details()[0]
+        weibo_url = get_comment_details(self.weibo_details_index)[0]
 
-        driver = self.activate_firefox_driver()
-        print("====== Firefox driver activate ======")
-        driver.get(weibo_url)
+        self.driver.get(weibo_url)
         print(f"Firefox driver go to {weibo_url}")
         sleep(10)
 
         # check comments
         # click "按时间"
-        driver.find_element(
+        self.driver.find_element(
             by=By.XPATH,
             value="//*[@id='app']/div[1]/div[2]/div[2]/main/div[1]/div/div[2]/div[2]/div[3]/div/div[1]/div/div[2]").click()
         sleep(2)
-        if "xxx" in driver.page_source:
+        if "xxx" in self.driver.page_source:
             print("xxx exist")
         else:
             print("Cannot find the text.")
         sleep(2)
 
-        driver.close()
+        self.driver.close()
         print("====== Firefox Driver Close ======")
