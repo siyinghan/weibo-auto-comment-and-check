@@ -87,21 +87,21 @@ class CommentSender(CommentsService):
     Send Weibo comments.
     """
 
-    def send_comments_and_like(self, like=True):
+    def send_comments_and_like(self):
         """Submit comments and click LIKE for each submitted comment."""
         weibo_url = self.get_comment_details()[0]
         total_count = self.get_comment_details()[1]
         new_comment_count = 0
         pre_comment_value = None
+        like = True
 
         driver = self.activate_chrome_driver()
-        logger_comment_sender.info("====== Chrome driver activate ======")
+        logger_comment_sender.info(f"Chrome driver activate for account {self.account_name}")
         driver.get(weibo_url)
-        logger_comment_sender.info(f"Chrome driver arrive page {weibo_url}")
+        logger_comment_sender.info(f"Chrome driver for account {self.account_name} arrive page {weibo_url}")
         sleep(2)
 
         # send comments and click like
-        logger_comment_sender.info(f"Start leaving comments for {self.account_name} from number {total_count + 1}...")
         with open("resources/accounts.json", "r") as json_file:
             comments_number = json.load(json_file)[self.account_name][1]
         for i in range(comments_number):
@@ -115,7 +115,9 @@ class CommentSender(CommentsService):
                 comment_value = self.generate_random_comment(total_count + 1)
             except NoSuchElementException as e:
                 # cookies expired
-                logger_comment_sender.exception(f"Please log in for account {self.account_name}")
+                logger_comment_sender.error(f"Please log in for account {self.account_name}")
+                driver.close()
+                logger_comment_sender.info(f"Chrome Driver Close for account {self.account_name}")
                 return None
             submit = driver.find_element(
                 by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[3]/div/button")
@@ -135,6 +137,8 @@ class CommentSender(CommentsService):
                 logger_comment_sender.info(f"Comment #{new_comment_count}: {pre_comment_value}")
 
             # write comment in the textarea
+            logger_comment_sender.info(
+                f"Start leaving comments for account {self.account_name} from number {total_count + 1}...")
             comment.send_keys(comment_value)
             pre_comment_value = comment_value
             comment.send_keys(Keys.SPACE)
@@ -145,22 +149,26 @@ class CommentSender(CommentsService):
             sleep(3)
 
             if like:
-                # like the comment
-                # continue the comments if like is unclickable
+                # LIKE the comment
+                # continue the comments without clicking LIKE if it's unclickable
+                like_button = driver.find_element(
+                    by=By.XPATH,
+                    value="//*[@id='scroller']/div[1]/div[1]/div/div/div/div[1]/div[2]/div[2]/div[2]/div[4]/button")
+                like_button.click()
+                sleep(1)
                 try:
-                    like = driver.find_element(
-                        by=By.XPATH,
-                        value="//*[@id='scroller']/div[1]/div[1]/div/div/div/div[1]/div[2]/div[2]/div[2]/div[4]/button")
-                    like.click()
-                except Exception as e:
-                    print("Like is unclickable.")
-                    print(e)
+                    like_button.find_element(by=By.CLASS_NAME, value="woo-like-an")
+                    logger_comment_sender.info(f"LIKE #{new_comment_count} succeeded")
+                except NoSuchElementException as e:
+                    # LIKE failed
+                    like = False
+                    logger_comment_sender.error(f"LIKE #{new_comment_count} failed")
             sleep(2)
         logger_comment_sender.info(f"{new_comment_count} comments successfully for account "
                                    f"{self.account_name}. {total_count} total for this Weibo.")
 
         driver.close()
-        logger_comment_sender.info("====== Chrome Driver Close ======")
+        logger_comment_sender.info(f"Chrome Driver Close for account {self.account_name}")
 
     @staticmethod
     def generate_random_comment(count_num):
