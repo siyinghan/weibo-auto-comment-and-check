@@ -92,6 +92,7 @@ class CommentSender(CommentsService):
         weibo_url = self.get_comment_details()[0]
         total_count = self.get_comment_details()[1]
         new_comment_count = 0
+        pre_comment_value = None
 
         driver = self.activate_chrome_driver()
         logger_comment_sender.info("====== Chrome driver activate ======")
@@ -110,7 +111,6 @@ class CommentSender(CommentsService):
                 # clear the remaining texts before starting a new loop
                 if i == 0 and comment.get_attribute("value"):
                     comment.clear()
-                    pre_comment_value = None
                 # generate comment value
                 comment_value = self.generate_random_comment(total_count + 1)
             except NoSuchElementException as e:
@@ -130,6 +130,7 @@ class CommentSender(CommentsService):
                                            f"{self.account_name}. {total_count} total for this Weibo.")
                 return None
 
+            # log the comment info only after success submitting
             if i > 0 and not comment.get_attribute("value"):
                 logger_comment_sender.info(f"Comment #{new_comment_count}: {pre_comment_value}")
 
@@ -141,8 +142,8 @@ class CommentSender(CommentsService):
             total_count += 1
             new_comment_count += 1
             self.update_comment_count(total_count)
-            # logger_comment_sender.info(f"Comment #{new_comment_count}: {comment_value}")
             sleep(3)
+
             if like:
                 # like the comment
                 # continue the comments if like is unclickable
