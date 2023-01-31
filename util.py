@@ -62,7 +62,6 @@ def activate_chrome_driver(account_name):
     driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
     driver.set_window_size(1400, 1000)
     # driver.maximize_window()
-    logger_comment_sender.info(f"Chrome driver activate for account '{account_name}'")
     return driver
 
 
@@ -71,7 +70,6 @@ def activate_firefox_driver():
     driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()))
     driver.set_window_size(1400, 1000)
     # driver.maximize_window()
-    logger_comment_checker.info("Firefox driver activate")
     return driver
 
 
@@ -133,6 +131,7 @@ class CommentSender:
                 self.account_comment_num = json.load(json_file)[account_name][1]
 
             with activate_chrome_driver(account_name) as driver:
+                logger_comment_sender.info(f"Chrome driver is activated with account '{account_name}'")
                 self.send_and_like_comment(driver, account_name)
 
     def send_and_like_comment(self, driver, account_name):
@@ -185,7 +184,7 @@ class CommentSender:
                 # TODO Queue
                 self.timestamp = comment_value.split()[-1]
                 self.check_queue.put(self.timestamp)
-                logger_comment_sender.info(f"Comment sender put timestamp '{self.timestamp}' in Queue")
+                logger_comment_sender.info(f"Put timestamp '{self.timestamp}' in Queue")
                 self.timestamp = None
                 sleep(1)
                 if self.like:
@@ -264,6 +263,7 @@ class CommentChecker:
         Run comment sender.
         """
         with activate_firefox_driver() as driver:
+            logger_comment_checker.info("Firefox driver is activated")
             self.check_comments(driver)
 
     # def get_timestamp_list(self):
@@ -279,11 +279,11 @@ class CommentChecker:
         Check comments.
         """
         driver.get(self.weibo_url)
-        logger_comment_checker.info(f"Firefox driver arrive page {self.weibo_url}")
+        logger_comment_checker.info(f"Firefox driver opened {self.weibo_url}")
 
         while True:
             timestamp = self.check_queue.get()
-            logger_comment_checker.info(f"Comment checker get timestamp '{timestamp}' from Queue")
+            logger_comment_checker.info(f"Get timestamp '{timestamp}' from Queue")
             self.Comment_dict[timestamp] = False
             logger_comment_checker.info(f"Comment dict: '{self.Comment_dict}'")
 
