@@ -183,10 +183,7 @@ class CommentSender:
                 self.new_comment_count += 1
                 self.update_comment_count()
                 logger_comment_sender.info(f"Comment #{self.new_comment_count}: '{comment_value}'")
-                logger_comment_sender.info(
-                    f"Update total comment count in 'data.json' to '{self.total_comment_count}'")
                 # save the timestamp to check if the comment is valid or not
-                # TODO Queue
                 self.timestamp = comment_value.split()[-1]
                 self.check_queue.put(self.timestamp)
                 logger_comment_sender.info(f"Put '{self.timestamp}' in Queue")
@@ -200,11 +197,8 @@ class CommentSender:
                 logger_comment_sender.error("Comment failed, please try again later")
                 break
 
-        self.check_queue.put(f"Done {self.account_name}")
-        logger_comment_sender.info(f"Put 'Done {self.account_name}' in Queue")
-
-        logger_comment_sender.info(f"Account '{self.account_name}' has sent {self.new_comment_count} comments, "
-                                   f"totally {self.total_comment_count} comments have been sent to this Weibo")
+        self.check_queue.put(f"Done {self.account_name} {self.total_comment_count}")
+        logger_comment_sender.info(f"Put 'Done {self.account_name} {self.total_comment_count}' in Queue")
 
     def like_comment(self, driver):
         """
@@ -291,8 +285,11 @@ class CommentChecker:
             get_item = self.check_queue.get()
             logger_comment_checker.info(f"Get '{get_item}' from Queue")
 
+            # TODO visible_comment_set
+
             if get_item.startswith("Done"):
                 account_name = get_item.split()[1]
+                total_comment_count = get_item.split()[2]
                 logger_comment_checker.info(f"'{account_name}' done")
                 # check if the comment is visible
                 for key in self.comment_dict:
@@ -303,7 +300,8 @@ class CommentChecker:
                 visible_rate = "{:.2%}".format(visible_comment_num / len(self.comment_dict))
                 self.account_summary[account_name] = (visible_comment_num, len(self.comment_dict), visible_rate)
                 logger_comment_checker.info(f"'{account_name}' send: {len(self.comment_dict)}, "
-                                            f"visible: {visible_comment_num}, visible rate: {visible_rate}")
+                                            f"visible: {visible_comment_num}, visible rate: {visible_rate}. "
+                                            f"Total (this Weibo): {total_comment_count}")
 
                 # reset for the next account
                 self.visible_comment_set = set()
