@@ -81,18 +81,25 @@ class Login:
 
     def __init__(self, account_name):
         self.account_name = account_name
-        self.driver = activate_chrome_driver(account_name)
 
-    def login(self):
+    def run(self):
+        """
+        Run login.
+        """
+        with activate_chrome_driver(self.account_name) as driver:
+            self.login(driver)
+
+    @staticmethod
+    def login(driver):
         """
         Save login information in Chrome profiles for Weibo Accounts.
         """
-        self.driver.implicitly_wait(10)
-        self.driver.get("https://weibo.com/login.php")
-        self.driver.find_element(
+        driver.implicitly_wait(10)
+        driver.get("https://weibo.com/login.php")
+        driver.find_element(
             by=By.XPATH, value="//*[@id='pl_login_form']/div/div[1]/a").click()
         sleep(0.5)
-        self.driver.find_element(
+        driver.find_element(
             by=By.XPATH, value="//*[@id='pl_login_form']/div/div[1]/a").click()
         # wait for scanning and login
         sleep(20)
