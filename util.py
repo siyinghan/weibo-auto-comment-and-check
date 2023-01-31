@@ -221,7 +221,7 @@ class CommentSender:
         except NoSuchElementException as _:
             # LIKE failed
             self.like = False
-            logger_comment_sender.error(f"Failed to LIKE #{self.new_comment_count}")
+            logger_comment_sender.error(f"Failed to LIKE comment #{self.new_comment_count}")
 
     def update_comment_count(self):
         """
