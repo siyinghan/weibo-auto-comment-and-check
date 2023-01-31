@@ -59,13 +59,13 @@
      "weibo_details": [
        {
          "link": "",
-         "comments_count": 0,
+         "total_comment_count": 0,
          "tag": "",
          "index": 0
        },
        {
          "link": "",
-         "comments_count": 0,
+         "total_comment_count": 0,
          "tag": "",
          "index": 1
        }
