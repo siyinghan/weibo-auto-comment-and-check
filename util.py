@@ -115,12 +115,12 @@ class CommentSender:
         self.weibo_details_index = weibo_details_index
         self.check_queue = check_queue
         self.like = True
-        self.timestamp_list = list()
         self.weibo_url = get_comment_details(self.weibo_details_index)[0]
         self.total_comment_count = get_comment_details(self.weibo_details_index)[1]
         self.new_comment_count = 0
         with open("resources/accounts.json", "r") as json_file:
             self.account_comment_num = json.load(json_file)[self.account_name][1]
+        self.timestamp_list = list()
 
     def run(self):
         """
@@ -159,7 +159,7 @@ class CommentSender:
             comment.send_keys(comment_value)
             comment.send_keys(Keys.SPACE)
             submit.click()
-            sleep(1)
+            sleep(2)
 
             # check if comment submitted successfully
             _ = driver.find_element(by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[1]/div/textarea")
@@ -177,6 +177,8 @@ class CommentSender:
                 if len(self.timestamp_list) == 1:
                     # TODO
                     self.check_queue.put(self.timestamp_list)
+                    logger_comment_sender.info(f"Comment sender Put {self.timestamp_list} in Queue")
+                    self.timestamp_list = list()
                 sleep(1)
                 if self.like:
                     self.like_comment(driver)
@@ -253,39 +255,44 @@ class CommentChecker:
     def __init__(self, weibo_details_index, check_queue: Queue = None):
         self.weibo_details_index = weibo_details_index
         self.check_queue = check_queue
-        self.driver = activate_firefox_driver()
+        self.weibo_url = get_comment_details(self.weibo_details_index)[0]
         self.timestamp_list = list()
 
-    def get_timestamp_list(self):
+    def run(self):
         """
-        Get timestamp list from Queue.
+        Run comment sender.
         """
-        while True:
-            self.timestamp_list = self.check_queue.get()
-            logger_comment_checker.info(self.timestamp_list)
+        with activate_firefox_driver() as driver:
+            self.check_comments(driver)
 
-    def check_comments(self):
+    # def get_timestamp_list(self):
+    #     """
+    #     Get timestamp list from Queue.
+    #     """
+    #     while True:
+    #         self.timestamp_list = self.check_queue.get()
+    #         logger_comment_checker.info(f"Get {self.timestamp_list} from Queue")
+
+    def check_comments(self, driver):
         """
         Check comments.
         """
-        weibo_url = get_comment_details(self.weibo_details_index)[0]
+        driver.get(self.weibo_url)
+        logger_comment_checker.info(f"Firefox driver arrive page {self.weibo_url}")
 
-        self.driver.get(weibo_url)
-        print(f"Firefox driver go to {weibo_url}")
-        sleep(10)
+        while True:
+            self.timestamp_list = self.check_queue.get()
+            logger_comment_checker.info(f"Comment checker Get {self.timestamp_list} from Queue")
 
-        # check comments
-        # click "按时间"
-        self.driver.find_element(
-            by=By.XPATH,
-            value="//*[@id='app']/div[1]/div[2]/div[2]/main/div[1]/div/div[2]/div[2]/div[3]/div/div[1]/div/div[2]"
-        ).click()
-        sleep(2)
-        if "xxx" in self.driver.page_source:
-            print("xxx exist")
-        else:
-            print("Cannot find the text.")
-        sleep(2)
-
-        self.driver.close()
-        print("====== Firefox Driver Close ======")
+        # # check comments
+        # # click "按时间"
+        # self.driver.find_element(
+        #     by=By.XPATH,
+        #     value="//*[@id='app']/div[1]/div[2]/div[2]/main/div[1]/div/div[2]/div[2]/div[3]/div/div[1]/div/div[2]"
+        # ).click()
+        # sleep(2)
+        # if "xxx" in self.driver.page_source:
+        #     print("xxx exist")
+        # else:
+        #     print("Cannot find the text.")
+        # sleep(2)
