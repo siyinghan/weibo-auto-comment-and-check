@@ -35,13 +35,13 @@ def get_comment_details(weibo_details_index):
     """
     Got the link and the total comments number of the target Weibo.
     :param weibo_details_index: int
-    :return: [weibo_link, comments_count]
+    :return: [weibo_link, total_comment_count]
     """
     with open("resources/data.json", "r") as json_file:
         data = json.load(json_file)
         weibo_link = data["weibo_details"][weibo_details_index]["link"]
-        comments_count = data["weibo_details"][weibo_details_index]["comments_count"]
-    return [weibo_link, comments_count]
+        total_comment_count = data["weibo_details"][weibo_details_index]["total_comment_count"]
+    return [weibo_link, total_comment_count]
 
 
 def activate_chrome_driver(account_name):
@@ -103,108 +103,116 @@ class CommentSender:
     Send Weibo comments.
     """
 
-    def __init__(self, account_name, weibo_details_index, check_queue: Queue = None):
+    def __init__(self, account_name, weibo_details_index, check_queue):
         self.account_name = account_name
         self.weibo_details_index = weibo_details_index
         self.check_queue = check_queue
-        self.driver = activate_chrome_driver(account_name)
+        self.like = True
+        self.timestamp_list = list()
+        self.weibo_url = get_comment_details(self.weibo_details_index)[0]
+        self.total_comment_count = get_comment_details(self.weibo_details_index)[1]
+        self.new_comment_count = 0
+        with open("resources/accounts.json", "r") as json_file:
+            self.account_comment_num = json.load(json_file)[self.account_name][1]
 
-    def send_and_like_comment(self):
+    def run(self):
         """
-        Submit comments and click LIKE for each submitted comment.
+        Run comment sender.
         """
-        weibo_url = get_comment_details(self.weibo_details_index)[0]
-        total_count = get_comment_details(self.weibo_details_index)[1]
-        new_comment_count = 0
-        timestamp_list = list()
-        like = True
+        with activate_chrome_driver(self.account_name) as driver:
+            self.send_and_like_comment(driver)
 
-        self.driver.get(weibo_url)
-        logger_comment_sender.info(f"Chrome driver for account {self.account_name} arrive page {weibo_url}")
+    def send_and_like_comment(self, driver):
+        """
+        Go to the target Weibo.
+        Input the comment and submit it.
+        LIKE the comment.
+        """
+        driver.get(self.weibo_url)
+        logger_comment_sender.info(f"Chrome driver for account {self.account_name} arrive page {self.weibo_url}")
         sleep(2)
 
         # send comments and click like
-        with open("resources/accounts.json", "r") as json_file:
-            comments_number = json.load(json_file)[self.account_name][1]
-        for i in range(comments_number):
+        for i in range(self.account_comment_num):
             try:
-                comment = self.driver.find_element(
+                comment = driver.find_element(
                     by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[1]/div/textarea")
                 # clear the remaining texts before starting a new loop
                 if i == 0 and comment.get_attribute("value"):
                     comment.clear()
                 # generate comment value
-                comment_value = self.generate_random_comment(total_count + 1)
+                comment_value = self.generate_random_comment(self.total_comment_count + 1)
             except NoSuchElementException as e:
                 # cookies expired
                 logger_comment_sender.error(f"Please log in for account {self.account_name}")
                 return None
-            submit = self.driver.find_element(
+            submit = driver.find_element(
                 by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[3]/div/button")
 
             comment.send_keys(comment_value)
             comment.send_keys(Keys.SPACE)
             submit.click()
             sleep(1)
+
             # check if comment submitted successfully
-            _ = self.driver.find_element(
-                by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[1]/div/textarea")
+            _ = driver.find_element(by=By.XPATH, value="//*[@id='composerEle']/div[2]/div/div[1]/div/textarea")
             submit_flag = False if _.get_attribute("value") else True
             # submission succeeded
             if submit_flag:
-                total_count += 1
-                new_comment_count += 1
-                logger_comment_sender.info(f"Comment #{new_comment_count}: {comment_value}")
-                self.update_comment_count(total_count)
+                self.total_comment_count += 1
+                self.new_comment_count += 1
+                self.update_comment_count()
+                logger_comment_sender.info(f"Comment #{self.new_comment_count}: {comment_value}")
+                logger_comment_sender.info(
+                    f"Update total comment count in data.json file to {self.total_comment_count}")
                 # save the timestamp to check if the comment is valid or not
-                timestamp_list.append(comment_value.split()[-1])
-                if len(timestamp_list) == 1:
+                self.timestamp_list.append(comment_value.split()[-1])
+                if len(self.timestamp_list) == 1:
                     # TODO
-                    self.check_queue.put(timestamp_list)
-                    timestamp_list = list()
+                    self.check_queue.put(self.timestamp_list)
                 sleep(1)
-                if like:
-                    like = self.like_comment(new_comment_count)
+                if self.like:
+                    self.like_comment(driver)
                     sleep(1)
             # submission failed
             else:
                 logger_comment_sender.error("Comment failed, please try again later")
-                logger_comment_sender.info(f"{new_comment_count} comments successfully for account "
-                                           f"{self.account_name}. {total_count} total for this Weibo.")
+                self.log_comment()
                 return None
-        logger_comment_sender.info(f"{new_comment_count} comments successfully for account "
-                                   f"{self.account_name}. {total_count} total for this Weibo.")
+        self.log_comment()
 
-    def like_comment(self, new_comment_count, like=True):
+    def log_comment(self):
         """
-        LIKE the comment.
-        :param new_comment_count: int
-        :param like: bool
+        Log the comment details after finishing.
+        """
+        logger_comment_sender.info(f"{self.new_comment_count} comments successfully for account "
+                                   f"{self.account_name}. {self.total_comment_count} total for this Weibo.")
+
+    def like_comment(self, driver):
+        """
+        LIKE the comment. Stop LIKE when it's not clickable.
         :return: like
         """
-        like_button = self.driver.find_element(
+        like_button = driver.find_element(
             by=By.XPATH,
             value="//*[@id='scroller']/div[1]/div[1]/div/div/div/div[1]/div[2]/div[2]/div[2]/div[4]/button")
         like_button.click()
         sleep(1)
         try:
             like_button.find_element(by=By.CLASS_NAME, value="woo-like-an")
-            logger_comment_sender.info(f"LIKE #{new_comment_count}")
+            logger_comment_sender.info(f"LIKE #{self.new_comment_count}")
         except NoSuchElementException as e:
             # LIKE failed
-            like = False
-            logger_comment_sender.error(f"Failed to LIKE #{new_comment_count}")
-        finally:
-            return like
+            self.like = False
+            logger_comment_sender.error(f"Failed to LIKE #{self.new_comment_count}")
 
-    def update_comment_count(self, total_count):
+    def update_comment_count(self):
         """
         Update the total comments number of the target Weibo.
-        :param total_count: int
         """
         with open("resources/data.json", "r", encoding="utf-8") as json_file:
             data = json.load(json_file)
-        data["weibo_details"][self.weibo_details_index]["comments_count"] = total_count
+        data["weibo_details"][self.weibo_details_index]["total_comment_count"] = self.total_comment_count
         with open("resources/data.json", "w", encoding="utf-8") as json_file:
             # ensure Chinese characters and JSON format
             json.dump(data, json_file, ensure_ascii=False, indent=2)
@@ -228,10 +236,6 @@ class CommentSender:
             random_letters.append("".join(random.choice(ascii_lowercase) for x in range(4)))
         return f"{random_letters[0]}{count_num}{random_emoji}{random_item[:random_num]}" \
                f"{random_letters[1]}{random_item[random_num:]} {timestamp}"
-
-    def to_check(self):
-        """Build a list of max 5 comments to be checked."""
-        # TODO
 
 
 class CommentChecker:
