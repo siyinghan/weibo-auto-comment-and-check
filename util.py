@@ -73,6 +73,7 @@ def activate_firefox_driver():
     return driver
 
 
+# TODO driver
 class Login:
     """
     Weibo login.
@@ -275,14 +276,6 @@ class CommentChecker:
         with activate_firefox_driver() as driver:
             logger_comment_checker.info("Firefox driver is activated")
             self.check_comments(driver)
-
-    # def get_timestamp_list(self):
-    #     """
-    #     Get timestamp list from Queue.
-    #     """
-    #     while True:
-    #         self.timestamp_list = self.check_queue.get()
-    #         logger_comment_checker.info(f"Get {self.timestamp_list} from Queue")
 
     def check_comments(self, driver):
         """
