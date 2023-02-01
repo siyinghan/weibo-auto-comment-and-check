@@ -78,7 +78,6 @@ def activate_firefox_driver():
     return driver
 
 
-# TODO driver
 class Login:
     """
     Weibo login.
