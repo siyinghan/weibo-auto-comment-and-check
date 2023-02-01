@@ -4,7 +4,9 @@ Click LIKE for each submitted comment.
 """
 import json
 import logging
+import os.path
 import random
+import re
 import sys
 from datetime import datetime
 from multiprocessing import Queue
@@ -67,7 +69,10 @@ def activate_chrome_driver(account_name):
 
 def activate_firefox_driver():
     """Activate Selenium Firefox driver."""
-    driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()))
+    driver = webdriver.Firefox(
+        service=FirefoxService(GeckoDriverManager().install()),
+        firefox_profile=webdriver.FirefoxProfile(
+            os.path.expanduser(r"~/Library/Application Support/Firefox/Profiles/colveb6e.default-release")))
     driver.set_window_size(1400, 1000)
     # driver.maximize_window()
     return driver
@@ -111,17 +116,16 @@ class CommentSender:
     """
 
     def __init__(self, account_names, weibo_details_index, check_queue):
-        self.driver = None
-        self.account_name = None
         self.account_names = account_names
         self.weibo_details_index = weibo_details_index
         self.check_queue = check_queue
         self.like = True
-        self.weibo_url = get_comment_details(self.weibo_details_index)[0]
-        self.total_comment_count = get_comment_details(self.weibo_details_index)[1]
+        self.driver = None
+        self.account_name = None
         self.new_comment_count = 0
         self.account_comment_num = 0
-        self.timestamp = None
+        self.weibo_url = get_comment_details(self.weibo_details_index)[0]
+        self.total_comment_count = get_comment_details(self.weibo_details_index)[1]
 
     def run(self):
         """
@@ -184,10 +188,9 @@ class CommentSender:
                 self.update_comment_count()
                 logger_comment_sender.info(f"Comment #{self.new_comment_count}: '{comment_value}'")
                 # save the timestamp to check if the comment is valid or not
-                self.timestamp = comment_value.split()[-1]
-                self.check_queue.put(self.timestamp)
-                logger_comment_sender.info(f"Put '{self.timestamp}' in Queue")
-                self.timestamp = None
+                timestamp = re.findall("t([0-9]{10})", comment_value)[0]
+                self.check_queue.put(timestamp)
+                logger_comment_sender.info(f"Put '{timestamp}' in Queue")
                 sleep(1)
                 if self.like:
                     self.like_comment(self.driver)
@@ -247,7 +250,7 @@ class CommentSender:
         for i in range(2):
             random_letters.append("".join(random.choice(ascii_lowercase) for _ in range(4)))
         return f"{random_letters[0]}{count_num}{random_emoji}{random_item[:random_num]}" \
-               f"{random_letters[1]}{random_item[random_num:]} {timestamp}"
+               f"{random_letters[1]}{random_item[random_num:]} t{timestamp}"
 
 
 class CommentChecker:
@@ -258,26 +261,28 @@ class CommentChecker:
     def __init__(self, weibo_details_index, check_queue: Queue = None):
         self.weibo_details_index = weibo_details_index
         self.check_queue = check_queue
-        self.weibo_url = get_comment_details(self.weibo_details_index)[0]
+        self.driver = None
         self.visible_comment_set = set()
-        self.comment_dict = dict()
+        self.submit_comment_dict = dict()
         self.account_summary = dict()
+        self.weibo_url = get_comment_details(self.weibo_details_index)[0]
 
     def run(self):
         """
         Run comment sender.
         """
         with activate_firefox_driver() as driver:
+            self.driver = driver
             logger_comment_checker.info("Firefox driver is activated")
-            self.check_comments(driver)
+            self.check_comments()
 
-    def check_comments(self, driver):
+    def check_comments(self):
         """
         Check comments.
         """
         visible_comment_num = 0
 
-        driver.get(self.weibo_url)
+        self.driver.get(self.weibo_url)
         logger_comment_checker.info(f"Firefox driver opened {self.weibo_url}")
 
         while True:
@@ -285,27 +290,26 @@ class CommentChecker:
             get_item = self.check_queue.get()
             logger_comment_checker.info(f"Get '{get_item}' from Queue")
 
-            # TODO visible_comment_set
-
             if get_item.startswith("Done"):
                 account_name = get_item.split()[1]
                 total_comment_count = get_item.split()[2]
                 logger_comment_checker.info(f"'{account_name}' done")
                 # check if the comment is visible
-                for key in self.comment_dict:
+                for key in self.submit_comment_dict:
                     if key in self.visible_comment_set:
-                        self.comment_dict[key] = True
+                        self.submit_comment_dict[key] = True
                         visible_comment_num += 1
+                logger_comment_checker.info(f"'{account_name}' comment {self.submit_comment_dict}")
 
-                visible_rate = "{:.2%}".format(visible_comment_num / len(self.comment_dict))
-                self.account_summary[account_name] = (visible_comment_num, len(self.comment_dict), visible_rate)
-                logger_comment_checker.info(f"'{account_name}' send: {len(self.comment_dict)}, "
+                visible_rate = "{:.2%}".format(visible_comment_num / len(self.submit_comment_dict))
+                self.account_summary[account_name] = (visible_comment_num, len(self.submit_comment_dict), visible_rate)
+                logger_comment_checker.info(f"'{account_name}' send: {len(self.submit_comment_dict)}, "
                                             f"visible: {visible_comment_num}, visible rate: {visible_rate}. "
                                             f"Total (this Weibo): {total_comment_count}")
 
                 # reset for the next account
                 self.visible_comment_set = set()
-                self.comment_dict = dict()
+                self.submit_comment_dict = dict()
                 visible_comment_num = 0
 
             # all accounts finished
@@ -316,18 +320,24 @@ class CommentChecker:
 
             else:
                 timestamp = get_item
-                self.comment_dict[timestamp] = False
-                logger_comment_checker.info(f"Comment dict: '{self.comment_dict}'")
+                self.submit_comment_dict[timestamp] = False
+                logger_comment_checker.info(
+                    f"Submit comment ({len(self.submit_comment_dict)}): {set(self.submit_comment_dict)}")
+                self.find_timestamp()
 
-        # # check comments
-        # # click "按时间"
-        # self.driver.find_element(
-        #     by=By.XPATH,
-        #     value="//*[@id='app']/div[1]/div[2]/div[2]/main/div[1]/div/div[2]/div[2]/div[3]/div/div[1]/div/div[2]"
-        # ).click()
-        # sleep(2)
-        # if "xxx" in self.driver.page_source:
-        #     print("xxx exist")
-        # else:
-        #     print("Cannot find the text.")
-        # sleep(2)
+    def find_timestamp(self):
+        """
+        Find all timestamps (starts with "t") in the page.
+        """
+        # click "按时间"
+        self.driver.find_element(
+            by=By.XPATH,
+            value="//*[@id='app']/div[1]/div[2]/div[2]/main/div[1]/div/div[2]/div[2]/div[3]/div/div[1]/div/div[2]"
+        ).click()
+        sleep(1)
+
+        page_source = self.driver.page_source
+        all_valid_timestamp = re.findall("t([0-9]{10})", page_source)
+        for valid_timestamp in all_valid_timestamp:
+            self.visible_comment_set.add(valid_timestamp)
+        logger_comment_checker.info(f"Visible comment ({len(self.visible_comment_set)}): {self.visible_comment_set}")
