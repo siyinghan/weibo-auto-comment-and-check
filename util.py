@@ -84,14 +84,18 @@ class Login:
     Weibo login.
     """
 
-    def __init__(self, account_name):
-        self.account_name = account_name
+    def run_chrome(self, account_name):
+        """
+        Chrome login.
+        """
+        with activate_chrome_driver(account_name) as driver:
+            self.login(driver)
 
-    def run(self):
+    def run_firefox(self):
         """
-        Run login.
+        Firefox login.
         """
-        with activate_chrome_driver(self.account_name) as driver:
+        with activate_firefox_driver() as driver:
             self.login(driver)
 
     @staticmethod
