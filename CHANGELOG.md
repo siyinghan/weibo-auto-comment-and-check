@@ -4,7 +4,6 @@
 
 #### Features
 
-- Add license.
 - Add logging.
 - Stop LIKE automatically when failing to LIKE.
 - Use multiprocessing to run another browser (Firefox) to check if the submitted comments are visible.
