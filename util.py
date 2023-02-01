@@ -22,6 +22,8 @@ from selenium.webdriver.firefox.service import Service as FirefoxService
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 
+firefox_profile = "colveb6e.default-release"
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(processName)s - %(levelname)s - %(message)s",
@@ -59,7 +61,7 @@ def activate_chrome_driver(account_name):
     # set driver
     options = webdriver.ChromeOptions()
     options.add_argument(r"--user-data-dir=~/Library/Application Support/Google/Chrome")
-    options.add_argument(f"--profile-directory={profile}")
+    options.add_argument(rf"--profile-directory={profile}")
     options.add_argument("--disable-extensions")
     driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
     driver.set_window_size(1400, 1000)
@@ -72,7 +74,7 @@ def activate_firefox_driver():
     driver = webdriver.Firefox(
         service=FirefoxService(GeckoDriverManager().install()),
         firefox_profile=webdriver.FirefoxProfile(
-            os.path.expanduser(r"~/Library/Application Support/Firefox/Profiles/colveb6e.default-release")))
+            os.path.expanduser(rf"~/Library/Application Support/Firefox/Profiles/{firefox_profile}")))
     driver.set_window_size(1400, 1000)
     # driver.maximize_window()
     return driver

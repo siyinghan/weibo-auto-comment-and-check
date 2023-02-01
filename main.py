@@ -3,9 +3,9 @@ Login with different Weibo accounts.
 """
 from multiprocessing import Queue, Process
 
-from util import CommentSender, CommentChecker, Login
+from util import CommentSender, CommentChecker
 
-accounts = ["汐琊"]
+accounts = ["account 1", "account 2", "account 3"]
 
 if __name__ == "__main__":
     check_queue = Queue()
