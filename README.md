@@ -2,42 +2,62 @@
 
 ## Quickstart
 
-### Login
+### Preparation
 
-1. Create new profiles in Chrome manually.
+Need to install Chrome and Firefox in advance.
 
-2. Open the Chrome folder to get the names of new profiles.
+Chrome profile folder:
+
+```zsh
+$ open ~/Library/Application\ Support/Google/Chrome
+```
+
+Firefox profile folder:
+
+```zsh
+$ open ~/Library/Application\ Support/Firefox/Profiles
+```
+
+### Chrome Login
+
+1. Create Weibo accounts information file.
+    1. Create an empty `json` file in the project **resources** folder.
+       ```zsh
+       $ touch resources/accounts.json
+       ```
+    2. Fill in the account names, the accordant profile names,
+       and the number that the account can comment (**20** in the example).
+       ```json
+       {
+         "account name 1": [
+           "profile name 1",
+           20
+         ],
+         "account name 2": [
+           "profile name 2",
+           20
+         ]
+       }
+       ```
+
+2. Fill in the `account_name` instead of "xxx" in `login_chrome.py`, then run `login_chrome.py` to log in.
    ```zsh
-   $ open ~/Library/Application\ Support/Google/Chrome
+   $ python login_chrome.py
    ```
 
-3. Add the profile name in `login.py` and run it.
+3. Scan the QR code in the automated browser to save the login information.
+
+### Firefox Login
+
+1. Open the Firefox folder to get the names of the profile.
    ```zsh
-   $ python login.py
+   $ open ~/Library/Application\ Support/Firefox/Profiles
    ```
 
-4. Scan the QR code in the automated browser to save the login information.
-
-### Create accounts information file
-
-1. Create an empty `json` file in the project **resources** folder:
+2. Fill in the `firefox_profile` instead of "colveb6e.default-release" in `util.py`, then run `login_firefox.py`
+   to log in.
    ```zsh
-   $ touch resources/accounts.json
-   ```
-
-2. Fill in the account names, the accordant profile names,
-   and the number that the account can comment (**20** in the example).
-   ```json
-   {
-     "account name 1": [
-       "profile name 1",
-       20
-     ],
-     "account name 2": [
-       "profile name 2",
-       20
-     ]
-   }
+   $ python login_firefox.py
    ```
 
 ### Create comments data file
@@ -90,7 +110,7 @@ The Chrome profile (which can be added in Chrome manually) should be used to rem
 ```python
 options = webdriver.ChromeOptions()
 options.add_argument(r"--user-data-dir=~/Library/Application Support/Google/Chrome")
-options.add_argument("--profile-directory={}".format(profile))
+options.add_argument(rf"--profile-directory={profile}")
 driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
 ```
 
