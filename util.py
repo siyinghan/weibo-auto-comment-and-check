@@ -211,7 +211,6 @@ class CommentSender:
     def like_comment(self, driver):
         """
         LIKE the comment. Stop LIKE when it's not clickable.
-        :return: like
         """
         like_button = driver.find_element(
             by=By.XPATH,
@@ -241,7 +240,7 @@ class CommentSender:
     def generate_random_comment(count_num):
         """
         Generate comments with random letters and random emojis.
-        :param count_num:
+        :param count_num: int
         :return: comment string
         """
         timestamp = int(datetime.now().timestamp())
