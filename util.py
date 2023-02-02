@@ -159,7 +159,7 @@ class CommentSender:
         """
 
         self.driver.get(self.weibo_url)
-        logger_comment_sender.info(f"Chrome driver ({self.account_name}) opened {self.weibo_url}")
+        logger_comment_sender.info(f"Chrome driver ({self.account_name}) open {self.weibo_url}")
         sleep(4)
 
         # send comments and click like
@@ -198,7 +198,7 @@ class CommentSender:
                 logger_comment_sender.info(f"'{self.account_name}' submit #{self.new_comment_count}: '{comment_value}'")
                 # save the timestamp to check if the comment is valid or not
                 self.check_queue.put(f"{comment_num} {comment_timestamp}")
-                logger_comment_sender.info(f"Put '{comment_num} {comment_timestamp}' in Queue")
+                logger_comment_sender.debug(f"Put '{comment_num} {comment_timestamp}' in Queue")
                 sleep(1)
                 if self.like:
                     self.like_comment(self.driver)
@@ -292,12 +292,12 @@ class CommentChecker:
         account_summary = dict()
 
         self.driver.get(weibo_url)
-        logger_comment_checker.info(f"Firefox driver opened {weibo_url}")
+        logger_comment_checker.info(f"Firefox driver open {weibo_url}")
 
         while True:
             # one account finished
             get_item = self.check_queue.get()
-            logger_comment_checker.info(f"Get '{get_item}' from Queue")
+            logger_comment_checker.debug(f"Get '{get_item}' from Queue")
 
             if get_item.startswith("Done"):
                 account_name = get_item.split()[1]
@@ -307,7 +307,7 @@ class CommentChecker:
                 visible_rate = "{:.2%}".format(self.visible_comment_count / submit_comment_count)
                 account_summary[account_name] = (
                     self.visible_comment_count, submit_comment_count, visible_rate)
-                logger_comment_checker.info(f"'{account_name}' send: {submit_comment_count}, "
+                logger_comment_checker.info(f"'{account_name}' - send: {submit_comment_count}, "
                                             f"visible: {self.visible_comment_count}, visible rate: {visible_rate}. "
                                             f"Total (this Weibo): {total_comment_count}")
 
