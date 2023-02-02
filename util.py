@@ -159,7 +159,7 @@ class CommentSender:
         """
 
         self.driver.get(self.weibo_url)
-        logger_comment_sender.info(f"Chrome driver ({self.account_name}) open {self.weibo_url}")
+        logger_comment_sender.info(f"Open (send comments - '{self.account_name}'): {self.weibo_url}")
         sleep(4)
 
         # send comments and click like
@@ -195,7 +195,7 @@ class CommentSender:
                 self.total_comment_count += 1
                 self.new_comment_count += 1
                 self.update_comment_count()
-                logger_comment_sender.info(f"'{self.account_name}' submit #{self.new_comment_count}: '{comment_value}'")
+                logger_comment_sender.info(f"'{self.account_name}' #{self.new_comment_count}: '{comment_value}'")
                 # save the timestamp to check if the comment is valid or not
                 self.check_queue.put(f"{comment_num} {comment_timestamp}")
                 logger_comment_sender.debug(f"Put '{comment_num} {comment_timestamp}' in Queue")
@@ -292,7 +292,7 @@ class CommentChecker:
         account_summary = dict()
 
         self.driver.get(weibo_url)
-        logger_comment_checker.info(f"Firefox driver open {weibo_url}")
+        logger_comment_checker.info(f"Open (check comments): {weibo_url}")
 
         while True:
             # one account finished
