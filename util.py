@@ -14,7 +14,7 @@ from string import ascii_lowercase
 from time import sleep
 
 from selenium import webdriver
-from selenium.common import NoSuchElementException
+from selenium.common import NoSuchElementException, ElementClickInterceptedException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -157,9 +157,10 @@ class CommentSender:
         Input the comment and submit it.
         LIKE the comment.
         """
+
         self.driver.get(self.weibo_url)
         logger_comment_sender.info(f"Chrome driver ({self.account_name}) opened {self.weibo_url}")
-        sleep(2)
+        sleep(4)
 
         # send comments and click like
         for i in range(self.account_comment_num):
@@ -170,7 +171,10 @@ class CommentSender:
                 if i == 0 and comment.get_attribute("value"):
                     comment.clear()
                 # generate comment value
-                comment_value = self.generate_random_comment(self.total_comment_count + 1)
+                generate_comment = self.generate_random_comment(self.total_comment_count + 1)
+                comment_value = generate_comment[0]
+                comment_timestamp = generate_comment[1]
+                comment_num = self.total_comment_count + 1
             except NoSuchElementException as _:
                 # cookies expired
                 logger_comment_sender.error(f"Please log in for account {self.account_name}")
@@ -191,11 +195,10 @@ class CommentSender:
                 self.total_comment_count += 1
                 self.new_comment_count += 1
                 self.update_comment_count()
-                logger_comment_sender.info(f"Comment #{self.new_comment_count}: '{comment_value}'")
+                logger_comment_sender.info(f"'{self.account_name}' submit #{self.new_comment_count}: '{comment_value}'")
                 # save the timestamp to check if the comment is valid or not
-                timestamp = re.findall("t([0-9]{10})", comment_value)[0]
-                self.check_queue.put(timestamp)
-                logger_comment_sender.info(f"Put '{timestamp}' in Queue")
+                self.check_queue.put(f"{comment_num} {comment_timestamp}")
+                logger_comment_sender.info(f"Put '{comment_num} {comment_timestamp}' in Queue")
                 sleep(1)
                 if self.like:
                     self.like_comment(self.driver)
@@ -219,11 +222,11 @@ class CommentSender:
         sleep(1)
         try:
             like_button.find_element(by=By.CLASS_NAME, value="woo-like-an")
-            logger_comment_sender.info(f"LIKE comment #{self.new_comment_count}")
+            logger_comment_sender.info(f"LIKE #{self.new_comment_count}")
         except NoSuchElementException as _:
             # LIKE failed
             self.like = False
-            logger_comment_sender.error(f"Failed to LIKE comment #{self.new_comment_count}")
+            logger_comment_sender.warning(f"Failed to LIKE comment #{self.new_comment_count}")
 
     def update_comment_count(self):
         """
@@ -253,8 +256,9 @@ class CommentSender:
         random_letters = []
         for i in range(2):
             random_letters.append("".join(random.choice(ascii_lowercase) for _ in range(4)))
-        return f"{random_letters[0]}{count_num}{random_emoji}{random_item[:random_num]}" \
-               f"{random_letters[1]}{random_item[random_num:]} t{timestamp}"
+        comment = f"{random_letters[0]}{count_num}{random_emoji}{random_item[:random_num]}" \
+                  f"{random_letters[1]}{random_item[random_num:]} t{timestamp}"
+        return [comment, timestamp]
 
 
 class CommentChecker:
@@ -266,10 +270,9 @@ class CommentChecker:
         self.weibo_details_index = weibo_details_index
         self.check_queue = check_queue
         self.driver = None
-        self.visible_comment_set = set()
-        self.submit_comment_dict = dict()
-        self.account_summary = dict()
-        self.weibo_url = get_comment_details(self.weibo_details_index)[0]
+        self.comment_num = None
+        self.comment_timestamp = None
+        self.visible_comment_count = 0
 
     def run(self):
         """
@@ -284,10 +287,12 @@ class CommentChecker:
         """
         Check comments.
         """
-        visible_comment_num = 0
+        weibo_url = get_comment_details(self.weibo_details_index)[0]
+        submit_comment_count = 0
+        account_summary = dict()
 
-        self.driver.get(self.weibo_url)
-        logger_comment_checker.info(f"Firefox driver opened {self.weibo_url}")
+        self.driver.get(weibo_url)
+        logger_comment_checker.info(f"Firefox driver opened {weibo_url}")
 
         while True:
             # one account finished
@@ -298,50 +303,67 @@ class CommentChecker:
                 account_name = get_item.split()[1]
                 total_comment_count = get_item.split()[2]
                 logger_comment_checker.info(f"'{account_name}' done")
-                # check if the comment is visible
-                for key in self.submit_comment_dict:
-                    if key in self.visible_comment_set:
-                        self.submit_comment_dict[key] = True
-                        visible_comment_num += 1
-                logger_comment_checker.info(f"'{account_name}' comment {self.submit_comment_dict}")
 
-                visible_rate = "{:.2%}".format(visible_comment_num / len(self.submit_comment_dict))
-                self.account_summary[account_name] = (visible_comment_num, len(self.submit_comment_dict), visible_rate)
-                logger_comment_checker.info(f"'{account_name}' send: {len(self.submit_comment_dict)}, "
-                                            f"visible: {visible_comment_num}, visible rate: {visible_rate}. "
+                visible_rate = "{:.2%}".format(self.visible_comment_count / submit_comment_count)
+                account_summary[account_name] = (
+                    self.visible_comment_count, submit_comment_count, visible_rate)
+                logger_comment_checker.info(f"'{account_name}' send: {submit_comment_count}, "
+                                            f"visible: {self.visible_comment_count}, visible rate: {visible_rate}. "
                                             f"Total (this Weibo): {total_comment_count}")
 
                 # reset for the next account
-                self.visible_comment_set = set()
-                self.submit_comment_dict = dict()
-                visible_comment_num = 0
+                submit_comment_count = 0
+                self.visible_comment_count = 0
 
             # all accounts finished
             elif get_item.startswith("All"):
                 logger_comment_checker.info("All accounts done")
-                logger_comment_checker.info(self.account_summary)
+                logger_comment_checker.info(account_summary)
+
+                # save account_summary in file
+                time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                with open("visible_rate.log", "a", encoding="utf-8") as file:
+                    file.write(f"{time} - {account_summary}\r")
                 break
 
             else:
-                timestamp = get_item
-                self.submit_comment_dict[timestamp] = False
-                logger_comment_checker.info(
-                    f"Submit comment ({len(self.submit_comment_dict)}): {set(self.submit_comment_dict)}")
+                submit_comment_count += 1
+                self.comment_num = get_item.split()[0]
+                self.comment_timestamp = get_item.split()[1]
                 self.find_timestamp()
 
     def find_timestamp(self):
         """
         Find all timestamps (starts with "t") in the page.
         """
-        # click "按时间"
-        self.driver.find_element(
-            by=By.XPATH,
-            value="//*[@id='app']/div[1]/div[2]/div[2]/main/div[1]/div/div[2]/div[2]/div[3]/div/div[1]/div/div[2]"
-        ).click()
-        sleep(1)
+        visible_comment_set = set()
+        run_times = 0
 
+        # click "按时间", sometimes it is not clickable, try another 2 times
+        while True:
+            try:
+                run_times += 1
+                self.driver.find_element(
+                    by=By.XPATH,
+                    value="//*[@id='app']/div[1]/div[2]/div[2]/main/div[1]/div/div[2]/div[2]/div[3]/div/div["
+                          "1]/div/div[2]"
+                ).click()
+                sleep(1)
+                break
+            except ElementClickInterceptedException as _:
+                logger_comment_checker.error("'按时间' is not clickable")
+                if run_times > 2:
+                    return None
+
+        # get all timestamps that start with "t" from the page
         page_source = self.driver.page_source
         all_valid_timestamp = re.findall("t([0-9]{10})", page_source)
         for valid_timestamp in all_valid_timestamp:
-            self.visible_comment_set.add(valid_timestamp)
-        logger_comment_checker.info(f"Visible comment ({len(self.visible_comment_set)}): {self.visible_comment_set}")
+            visible_comment_set.add(valid_timestamp)
+
+        # check if the submitted comment is visible
+        if self.comment_timestamp in visible_comment_set:
+            self.visible_comment_count += 1
+            logger_comment_checker.info(f"Comment #{self.comment_num} is visible")
+        else:
+            logger_comment_checker.warning(f"Comment #{self.comment_num} is not visible")
