@@ -364,7 +364,7 @@ class CommentChecker:
             value="//*[@id='app']/div[1]/div[2]/div[2]/main/div[1]/div/div[2]/div[2]/div[3]/div/div["
                   "1]/div/div[2]"
         ).click()
-        sleep(0.5)
+        sleep(1)
 
         # get all timestamps that start with "t" from the page
         page_source = self.driver.page_source
