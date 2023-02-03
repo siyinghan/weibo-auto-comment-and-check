@@ -28,7 +28,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(processName)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("log.log", "w"),
+        logging.FileHandler("log.log"),
         logging.StreamHandler(stream=sys.stdout)
     ]
 )
@@ -222,11 +222,11 @@ class CommentSender:
         sleep(1)
         try:
             like_button.find_element(by=By.CLASS_NAME, value="woo-like-an")
-            logger_comment_sender.info(f"LIKE #{self.new_comment_count}")
+            logger_comment_sender.info(f"LIKE #{self.total_comment_count}")
         except NoSuchElementException as _:
             # LIKE failed
             self.like = False
-            logger_comment_sender.warning(f"Failed to LIKE comment #{self.new_comment_count}")
+            logger_comment_sender.warning(f"Failed to LIKE comment #{self.total_comment_count}")
 
     def update_comment_count(self):
         """
@@ -304,12 +304,14 @@ class CommentChecker:
                 total_comment_count = get_item.split()[2]
                 logger_comment_checker.info(f"'{account_name}' done")
 
-                visible_rate = "{:.2%}".format(self.visible_comment_count / submit_comment_count)
-                account_summary[account_name] = (
-                    self.visible_comment_count, submit_comment_count, visible_rate)
-                logger_comment_checker.info(f"'{account_name}' - send: {submit_comment_count}, "
-                                            f"visible: {self.visible_comment_count}, visible rate: {visible_rate}. "
-                                            f"Total (this Weibo): {total_comment_count}")
+                # calculate visible_rate only when submit_comment_count is not 0
+                if submit_comment_count:
+                    visible_rate = "{:.2%}".format(self.visible_comment_count / submit_comment_count)
+                    account_summary[account_name] = (
+                        self.visible_comment_count, submit_comment_count, visible_rate)
+                    logger_comment_checker.info(f"'{account_name}' - send: {submit_comment_count}, "
+                                                f"visible: {self.visible_comment_count}, visible rate: {visible_rate}. "
+                                                f"Total (this Weibo): {total_comment_count}")
 
                 # reset for the next account
                 submit_comment_count = 0
@@ -330,6 +332,7 @@ class CommentChecker:
                 submit_comment_count += 1
                 self.comment_num = get_item.split()[0]
                 self.comment_timestamp = get_item.split()[1]
+                sleep(1)
                 self.find_timestamp()
 
     def find_timestamp(self):
@@ -337,23 +340,31 @@ class CommentChecker:
         Find all timestamps (starts with "t") in the page.
         """
         visible_comment_set = set()
-        run_times = 0
+        # run_times = 0
 
         # click "按时间", sometimes it is not clickable, try another 2 times
-        while True:
-            try:
-                run_times += 1
-                self.driver.find_element(
-                    by=By.XPATH,
-                    value="//*[@id='app']/div[1]/div[2]/div[2]/main/div[1]/div/div[2]/div[2]/div[3]/div/div["
-                          "1]/div/div[2]"
-                ).click()
-                sleep(1)
-                break
-            except ElementClickInterceptedException as _:
-                logger_comment_checker.error("'按时间' is not clickable")
-                if run_times > 2:
-                    return None
+        # TODO check if while true needed
+        # while True:
+        #     sleep(1)
+        #     try:
+        #         run_times += 1
+        #         self.driver.find_element(
+        #             by=By.XPATH,
+        #             value="//*[@id='app']/div[1]/div[2]/div[2]/main/div[1]/div/div[2]/div[2]/div[3]/div/div["
+        #                   "1]/div/div[2]"
+        #         ).click()
+        #         sleep(0.5)
+        #         break
+        #     except ElementClickInterceptedException as _:
+        #         logger_comment_checker.error("'按时间' is not clickable")
+        #         if run_times > 2:
+        #             return None
+        self.driver.find_element(
+            by=By.XPATH,
+            value="//*[@id='app']/div[1]/div[2]/div[2]/main/div[1]/div/div[2]/div[2]/div[3]/div/div["
+                  "1]/div/div[2]"
+        ).click()
+        sleep(0.5)
 
         # get all timestamps that start with "t" from the page
         page_source = self.driver.page_source
