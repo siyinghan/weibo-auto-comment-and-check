@@ -36,6 +36,20 @@ logger_comment_sender = logging.getLogger("CS")
 logger_comment_checker = logging.getLogger("CC")
 
 
+def get_start_account_info(account_names):
+    """
+    Log the running accounts information.
+    :param account_names: List[str]
+    """
+    account_dict = dict()
+    with open("resources/accounts.json", "r") as json_file:
+        data = json.load(json_file)
+        for account_name in account_names:
+            comment_num = data[account_name][1]
+            account_dict[account_name] = comment_num
+    logging.info(f"Start {account_dict}...")
+
+
 def get_comment_details(weibo_details_index):
     """
     Got the link and the total comments number of the target Weibo.

@@ -20,15 +20,7 @@ logging.basicConfig(
     ]
 )
 
-account_dict = dict()
-with open("resources/accounts.json", "r") as json_file:
-    for account in accounts:
-        comment_num = json.load(json_file)[account][1]
-        account_dict[account] = comment_num
-
 if __name__ == "__main__":
-    logging.info(f"Start {account_dict}...")
-
     check_queue = Queue()
     p1 = Process(target=CommentSender(accounts, link_index, check_queue).run, args=())
     p2 = Process(target=CommentChecker(link_index, check_queue).run, args=())
