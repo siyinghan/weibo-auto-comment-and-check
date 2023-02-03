@@ -65,7 +65,6 @@ def activate_chrome_driver(account_name):
     options.add_argument("--disable-extensions")
     driver = webdriver.Chrome(options=options, service=Service(ChromeDriverManager().install()))
     driver.set_window_size(1400, 1000)
-    # driver.maximize_window()
     return driver
 
 
@@ -76,7 +75,6 @@ def activate_firefox_driver():
         firefox_profile=webdriver.FirefoxProfile(
             os.path.expanduser(rf"~/Library/Application Support/Firefox/Profiles/{firefox_profile}")))
     driver.set_window_size(1400, 1000)
-    # driver.maximize_window()
     return driver
 
 
