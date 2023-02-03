@@ -21,8 +21,8 @@ logging.basicConfig(
 )
 
 account_dict = dict()
-for account in accounts:
-    with open("resources/accounts.json", "r") as json_file:
+with open("resources/accounts.json", "r") as json_file:
+    for account in accounts:
         comment_num = json.load(json_file)[account][1]
         account_dict[account] = comment_num
 
