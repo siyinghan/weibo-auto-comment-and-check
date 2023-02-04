@@ -54,7 +54,7 @@ def get_comment_details(weibo_details_index):
     """
     Got the link and the total comments number of the target Weibo.
     :param weibo_details_index: int
-    :return: [weibo_link, total_comment_count]
+    :return: [str, int]
     """
     with open("resources/data.json", "r") as json_file:
         data = json.load(json_file)
@@ -259,7 +259,7 @@ class CommentSender:
         """
         Generate comments with random letters and random emojis.
         :param count_num: int
-        :return: comment string
+        :return: str
         """
         timestamp = int(datetime.now().timestamp())
         with open("resources/random_text.txt") as file:
