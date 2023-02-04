@@ -28,7 +28,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(processName)s - %(levelname)s - %(message)s",
     handlers=[
-        logging.FileHandler("log.log"),
+        logging.FileHandler("./log/weibo-auto.log"),
         logging.StreamHandler(stream=sys.stdout)
     ]
 )
@@ -374,7 +374,7 @@ class CommentChecker:
 
         # save account_summary in file
         time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        with open("visibility_rate.log", "a", encoding="utf-8") as file:
+        with open("./log/visibility_rate.log", "a", encoding="utf-8") as file:
             file.write(f"{time} - {self.accounts_check_summary}\r")
 
     def get_page_timestamp(self):
