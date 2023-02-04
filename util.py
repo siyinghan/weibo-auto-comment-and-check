@@ -282,9 +282,12 @@ class CommentChecker:
         self.weibo_details_index = weibo_details_index
         self.check_queue = check_queue
         self.driver = None
-        self.comment_num = None
-        self.comment_timestamp = None
+        self.submit_comment_count = 0
         self.visible_comment_count = 0
+        self.visible_comment = set()
+        self.one_account_comment = dict()
+        self.comment_check = dict()
+        self.accounts_check_summary = dict()
 
     def run(self):
         """
@@ -300,77 +303,84 @@ class CommentChecker:
         Check comments.
         """
         weibo_url = get_comment_details(self.weibo_details_index)[0]
-        submit_comment_count = 0
-        account_summary = dict()
 
         self.driver.get(weibo_url)
         logger_comment_checker.info(f"Open (check comments): {weibo_url}")
 
         while True:
-            # one account finished
             get_item = self.check_queue.get()
             logger_comment_checker.debug(f"Get '{get_item}' from Queue")
 
+            # one account finished
             if get_item.startswith("Done"):
-                account_name = get_item.split()[1]
-                total_comment_count = get_item.split()[2]
-                logger_comment_checker.info(f"'{account_name}' done")
-
-                # calculate visible_rate only when submit_comment_count is not 0
-                if submit_comment_count:
-                    visible_rate = "{:.2%}".format(self.visible_comment_count / submit_comment_count)
-                    account_summary[account_name] = (
-                        self.visible_comment_count, submit_comment_count, visible_rate)
-                    logger_comment_checker.info(f"'{account_name}' - send: {submit_comment_count}, "
-                                                f"visible: {self.visible_comment_count}, visible rate: {visible_rate}. "
-                                                f"Total (this Weibo): {total_comment_count}")
-
-                # reset for the next account
-                submit_comment_count = 0
-                self.visible_comment_count = 0
-
+                self.one_account_comment_done(get_item)
             # all accounts finished
             elif get_item.startswith("All"):
-                logger_comment_checker.info("All accounts done")
-                logger_comment_checker.info(account_summary)
-
-                # save account_summary in file
-                time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                with open("visible_rate.log", "a", encoding="utf-8") as file:
-                    file.write(f"{time} - {account_summary}\r")
+                self.all_accounts_comment_done()
                 break
-
+            # one comment submitted
             else:
-                submit_comment_count += 1
-                self.comment_num = get_item.split()[0]
-                self.comment_timestamp = get_item.split()[1]
-                sleep(1)
-                self.find_timestamp()
+                self.one_comment_submit(get_item)
 
-    def find_timestamp(self):
+    def one_comment_submit(self, get_item):
         """
-        Find all timestamps (starts with "t") in the page.
+        Update variables and get timestamps from the page when CommentSender submitted a comment.
+        :param get_item: str from Queue
         """
-        visible_comment_set = set()
-        # run_times = 0
+        self.submit_comment_count += 1
+        comment_num = get_item.split()[0]
+        comment_timestamp = get_item.split()[1]
+        self.one_account_comment[comment_timestamp] = comment_num
+        # set comment_num default to False
+        self.comment_check[comment_num] = False
+        self.get_page_timestamp()
+
+    def one_account_comment_done(self, get_item):
+        """
+        Check comments visibility and update variables when CommentSender finished sending comments for one account.
+        :param get_item: str from Queue
+        """
+        account_name = get_item.split()[1]
+        total_comment_count = get_item.split()[2]
+        logger_comment_checker.info(f"'{account_name}' done")
+
+        # check comments visibility of the finished account
+        self.check_comment_visibility()
+
+        # calculate visibility_rate only when submit_comment_count is not 0
+        if self.submit_comment_count:
+            visibility_rate = "{:.2%}".format(self.visible_comment_count / self.submit_comment_count)
+            self.accounts_check_summary[account_name] = (
+                self.visible_comment_count, self.submit_comment_count, visibility_rate)
+            logger_comment_checker.info(f"'{account_name}' - {{send: {self.submit_comment_count}, "
+                                        f"visible: {self.visible_comment_count}, visibility rate: {visibility_rate}. "
+                                        f"total (this Weibo): {total_comment_count}}}")
+
+        # reset for the next account
+        self.submit_comment_count = 0
+        self.visible_comment_count = 0
+        self.one_account_comment = dict()
+        self.comment_check = dict()
+
+    def all_accounts_comment_done(self):
+        """
+        Log info when CommentSender finished sending comments for all accounts.
+        """
+        logger_comment_checker.info("All accounts done")
+        logger_comment_checker.info(self.accounts_check_summary)
+
+        # save account_summary in file
+        time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        with open("visibility_rate.log", "a", encoding="utf-8") as file:
+            file.write(f"{time} - {self.accounts_check_summary}\r")
+
+    def get_page_timestamp(self):
+        """
+        Refresh and get all timestamps (starts with "t") from the page.
+        """
+        sleep(1)
 
         # click "按时间", sometimes it is not clickable, try another 2 times
-        # TODO check if while true needed
-        # while True:
-        #     sleep(1)
-        #     try:
-        #         run_times += 1
-        #         self.driver.find_element(
-        #             by=By.XPATH,
-        #             value="//*[@id='app']/div[1]/div[2]/div[2]/main/div[1]/div/div[2]/div[2]/div[3]/div/div["
-        #                   "1]/div/div[2]"
-        #         ).click()
-        #         sleep(0.5)
-        #         break
-        #     except ElementClickInterceptedException as _:
-        #         logger_comment_checker.error("'按时间' is not clickable")
-        #         if run_times > 2:
-        #             return None
         self.driver.find_element(
             by=By.XPATH,
             value="//*[@id='app']/div[1]/div[2]/div[2]/main/div[1]/div/div[2]/div[2]/div[3]/div/div["
@@ -380,13 +390,21 @@ class CommentChecker:
 
         # get all timestamps that start with "t" from the page
         page_source = self.driver.page_source
-        all_valid_timestamp = re.findall("t([0-9]{10})", page_source)
-        for valid_timestamp in all_valid_timestamp:
-            visible_comment_set.add(valid_timestamp)
+        valid_timestamps = set(re.findall("t([0-9]{10})", page_source))
+        logger_comment_checker.debug(f"Valid timestamps in the page: {valid_timestamps}")
+        for valid_timestamp in valid_timestamps:
+            self.visible_comment.add(valid_timestamp)
 
-        # check if the submitted comment is visible
-        if self.comment_timestamp in visible_comment_set:
-            self.visible_comment_count += 1
-            logger_comment_checker.info(f"Comment #{self.comment_num} is visible")
-        else:
-            logger_comment_checker.warning(f"Comment #{self.comment_num} is not visible")
+    def check_comment_visibility(self):
+        """
+        Check if the submitted comment is visible.
+        """
+        for comment_timestamp, comment_num in self.one_account_comment.items():
+            if comment_timestamp in self.visible_comment:
+                # set comment_num to True if comment_timestamp is visible
+                self.comment_check[comment_num] = True
+        logger_comment_checker.info(f"{self.comment_check}")
+
+        for status in self.comment_check.values():
+            if status is True:
+                self.visible_comment_count += 1
