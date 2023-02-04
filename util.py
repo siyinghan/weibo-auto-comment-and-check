@@ -14,7 +14,7 @@ from string import ascii_lowercase
 from time import sleep
 
 from selenium import webdriver
-from selenium.common import NoSuchElementException, ElementClickInterceptedException
+from selenium.common import NoSuchElementException
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -159,6 +159,9 @@ class CommentSender:
                 self.driver = driver
                 logger_comment_sender.info(f"Chrome driver is activated with account '{self.account_name}'")
                 self.send_and_like_comment()
+
+            # set LIKE to True for the next account
+            self.like = True
 
         self.check_queue.put("All Done")
         logger_comment_sender.info("Put 'All Done' in Queue")
