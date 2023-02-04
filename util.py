@@ -47,7 +47,7 @@ def get_start_account_info(account_names):
         for account_name in account_names:
             comment_num = data[account_name][1]
             account_dict[account_name] = comment_num
-    logging.info(f"Start {account_dict}...")
+    logging.info(f"Start weibo-auto {account_dict} ...")
 
 
 def get_comment_details(weibo_details_index):
