@@ -49,7 +49,7 @@ def get_start_info(account_names, link_index):
             comment_num = data[account_name][1]
             account_dict[account_name] = comment_num
     with open("resources/data.json", "r") as json_file:
-        data = json.load(json_file)()
+        data = json.load(json_file)
         weibo_tag = data["weibo_details"][link_index]["tag"]
         total_comment_count = data["weibo_details"][link_index]["total_comment_count"]
     logging.info(f"Start {account_dict} | {{'{weibo_tag}': {total_comment_count}}} ...")
