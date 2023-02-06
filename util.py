@@ -265,22 +265,6 @@ class CommentSender:
             json.dump(data, json_file, ensure_ascii=False, indent=2)
 
     @staticmethod
-    def backup_file():
-        """
-        Copy the configuration and the log files to another place for safety.
-        """
-        current_dir = Path(__file__).parent.absolute()
-        target_dir = "/Volumes/home/Project/weibo-auto"
-        copy_file = ["accounts.json", "data.json", "visibility_rate.log", "weibo-auto.log"]
-        for filename in copy_file:
-            if filename.endswith(".json"):
-                copy(os.path.join(current_dir, "resources", filename), os.path.join(target_dir, filename))
-                logger_comment_sender.info(f"Backup '{filename}'")
-            elif filename.endswith(".log"):
-                copy(os.path.join(current_dir, "log", filename), os.path.join(target_dir, filename))
-                logger_comment_sender.info(f"Backup '{filename}'")
-
-    @staticmethod
     def generate_random_comment(count_num):
         """
         Generate comments with random letters and random emojis.
@@ -300,6 +284,22 @@ class CommentSender:
         comment = f"{random_letters[0]}{count_num}{random_emoji}{random_item[:random_num]}" \
                   f"{random_letters[1]}{random_item[random_num:]} t{timestamp}"
         return [comment, timestamp]
+
+    @staticmethod
+    def backup_file():
+        """
+        Copy the configuration and the log files to another place for safety.
+        """
+        current_dir = Path(__file__).parent.absolute()
+        target_dir = "/Volumes/home/Project/weibo-auto"
+        copy_file = ["accounts.json", "data.json", "visibility_rate.log", "weibo-auto.log"]
+        for filename in copy_file:
+            if filename.endswith(".json"):
+                copy(os.path.join(current_dir, "resources", filename), os.path.join(target_dir, filename))
+                logger_comment_sender.info(f"Backup '{filename}'")
+            elif filename.endswith(".log"):
+                copy(os.path.join(current_dir, "log", filename), os.path.join(target_dir, filename))
+                logger_comment_sender.info(f"Backup '{filename}'")
 
 
 class CommentChecker:
