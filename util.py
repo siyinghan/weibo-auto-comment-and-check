@@ -270,16 +270,14 @@ class CommentSender:
         Copy the configuration and the log files to another place for safety.
         """
         current_dir = Path(__file__).parent.absolute()
-        target_dir = "~/Volumes/home/Project/weibo-auto/"
+        target_dir = "/Volumes/home/Project/weibo-auto"
         copy_file = ["accounts.json", "data.json", "visibility_rate.log", "weibo-auto.log"]
         for filename in copy_file:
-            if filename.split(".")[1] == "json":
-                copy(f"{current_dir}/resources/{filename}",
-                     os.path.expanduser(f"{target_dir}{filename}"))
+            if filename.endswith(".json"):
+                copy(os.path.join(current_dir, "resources", filename), os.path.join(target_dir, filename))
                 logger_comment_sender.info(f"Backup '{filename}'")
-            else:
-                copy(f"{current_dir}/log/{filename}",
-                     os.path.expanduser(f"{target_dir}{filename}"))
+            elif filename.endswith(".log"):
+                copy(os.path.join(current_dir, "log", filename), os.path.join(target_dir, filename))
                 logger_comment_sender.info(f"Backup '{filename}'")
 
     @staticmethod
