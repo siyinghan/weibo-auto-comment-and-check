@@ -10,9 +10,11 @@ import re
 import sys
 from datetime import datetime
 from multiprocessing import Queue
+from shutil import copy
 from string import ascii_lowercase
 from time import sleep
 
+from pathlib import Path
 from selenium import webdriver
 from selenium.common import NoSuchElementException
 from selenium.webdriver.chrome.service import Service
@@ -169,7 +171,8 @@ class CommentSender:
             self.like = True
 
         self.check_queue.put("All Done")
-        logger_comment_sender.info("Put 'All Done' in Queue")
+        logger_comment_sender.debug("Put 'All Done' in Queue")
+        self.backup_file()
 
     def send_and_like_comment(self):
         """
@@ -258,6 +261,24 @@ class CommentSender:
         with open("resources/data.json", "w", encoding="utf-8") as json_file:
             # ensure Chinese characters and JSON format
             json.dump(data, json_file, ensure_ascii=False, indent=2)
+
+    @staticmethod
+    def backup_file():
+        """
+        Copy the configuration and the log files to another place for safety.
+        """
+        current_dir = Path(__file__).parent.absolute()
+        target_dir = "~/Volumes/home/Project/weibo-auto/"
+        copy_file = ["accounts.json", "data.json", "visibility_rate.log", "weibo-auto.log"]
+        for filename in copy_file:
+            if filename.split(".")[1] == "json":
+                copy(f"{current_dir}/resources/{filename}",
+                     os.path.expanduser(f"{target_dir}{filename}"))
+                logger_comment_sender.info(f"Backup '{filename}'")
+            else:
+                copy(f"{current_dir}/log/{filename}",
+                     os.path.expanduser(f"{target_dir}{filename}"))
+                logger_comment_sender.info(f"Backup '{filename}'")
 
     @staticmethod
     def generate_random_comment(count_num):
