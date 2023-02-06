@@ -24,7 +24,8 @@ from selenium.webdriver.firefox.service import Service as FirefoxService
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 
-firefox_profile = "colveb6e.default-release"
+# create "log" folder if it is not exist
+os.makedirs("log", exist_ok=True)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -91,10 +92,11 @@ def activate_chrome_driver(account_name):
 
 def activate_firefox_driver():
     """Activate Selenium Firefox driver."""
+    firefox_location = os.path.expanduser(r"~/Library/Application Support/Firefox/Profiles")
+    firefox_profile = [_ for _ in os.listdir(firefox_location) if _.endswith("release")][0]
     driver = webdriver.Firefox(
         service=FirefoxService(GeckoDriverManager().install()),
-        firefox_profile=webdriver.FirefoxProfile(
-            os.path.expanduser(rf"~/Library/Application Support/Firefox/Profiles/{firefox_profile}")))
+        firefox_profile=webdriver.FirefoxProfile(os.path.join(firefox_location, firefox_profile)))
     driver.set_window_size(1400, 1000)
     return driver
 
