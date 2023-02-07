@@ -45,9 +45,6 @@ def get_start_info(account_names, link_index):
     :param account_names: List[str]
     :param link_index: int
     """
-    # copy files from the storage
-    backup_file("copy")
-
     account_dict = dict()
     with open("conf/accounts.json", "r") as json_file:
         data = json.load(json_file)
@@ -59,6 +56,9 @@ def get_start_info(account_names, link_index):
         weibo_tag = data["weibo_details"][link_index]["tag"]
         total_comment_count = data["weibo_details"][link_index]["total_comment_count"]
     logging.info(f"Start {account_dict} | {{'{weibo_tag}': {total_comment_count}}} ...")
+
+    # copy files from the storage
+    backup_file("copy")
 
 
 def end():
