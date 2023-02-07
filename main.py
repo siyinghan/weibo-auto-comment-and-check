@@ -3,7 +3,7 @@ Login with different Weibo accounts.
 """
 from multiprocessing import Queue, Process
 
-from util import CommentSender, CommentChecker, get_start_info
+from util import CommentSender, CommentChecker, get_start_info, end
 
 accounts = ["account 1", "account 2", "account 3"]
 link_index = 0
@@ -18,3 +18,5 @@ if __name__ == "__main__":
     p2.start()
     p1.join()
     p2.join()
+
+    end()
