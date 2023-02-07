@@ -467,8 +467,10 @@ class CommentChecker:
             if comment_timestamp in self.visible_comment:
                 # set comment_num to True if comment_timestamp is visible
                 self.comment_check[comment_num] = True
-        logger_comment_checker.info(f"{self.comment_check}")
-
-        for status in self.comment_check.values():
-            if status is True:
+        invalid_comment = dict()
+        for comment_num, status in self.comment_check.items():
+            if not status:
+                invalid_comment[comment_num] = status
+            else:
                 self.visible_comment_count += 1
+        logger_comment_checker.info(f"{invalid_comment}")
