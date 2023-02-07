@@ -46,12 +46,12 @@ def get_start_info(account_names, link_index):
     :param link_index: int
     """
     account_dict = dict()
-    with open("resources/accounts.json", "r") as json_file:
+    with open("conf/accounts.json", "r") as json_file:
         data = json.load(json_file)
         for account_name in account_names:
             comment_num = data[account_name][1]
             account_dict[account_name] = comment_num
-    with open("resources/data.json", "r") as json_file:
+    with open("conf/data.json", "r") as json_file:
         data = json.load(json_file)
         weibo_tag = data["weibo_details"][link_index]["tag"]
         total_comment_count = data["weibo_details"][link_index]["total_comment_count"]
@@ -64,7 +64,7 @@ def get_comment_details(weibo_details_index):
     :param weibo_details_index: int
     :return: [str, int]
     """
-    with open("resources/data.json", "r") as json_file:
+    with open("conf/data.json", "r") as json_file:
         data = json.load(json_file)
         weibo_link = data["weibo_details"][weibo_details_index]["link"]
         total_comment_count = data["weibo_details"][weibo_details_index]["total_comment_count"]
@@ -78,7 +78,7 @@ def activate_chrome_driver(account_name):
     :return: driver
     """
     # get profile name
-    with open("resources/accounts.json", "r") as json_file:
+    with open("conf/accounts.json", "r") as json_file:
         profile = json.load(json_file)[account_name][0]
     # set driver
     options = webdriver.ChromeOptions()
@@ -157,11 +157,14 @@ class CommentSender:
         """
         Run comment sender.
         """
+        # copy files from the storage
+        self.backup_file("copy")
+
         for account_name in self.account_names:
             self.account_name = account_name
             self.new_comment_count = 0
 
-            with open("resources/accounts.json", "r") as json_file:
+            with open("conf/accounts.json", "r") as json_file:
                 self.account_comment_num = json.load(json_file)[account_name][1]
 
             with activate_chrome_driver(self.account_name) as driver:
@@ -174,7 +177,9 @@ class CommentSender:
 
         self.check_queue.put("All Done")
         logger_comment_sender.debug("Put 'All Done' in Queue")
-        self.backup_file()
+
+        # backup files to the storage
+        self.backup_file("backup")
 
     def send_and_like_comment(self):
         """
@@ -257,10 +262,10 @@ class CommentSender:
         """
         Update the total comments number of the target Weibo.
         """
-        with open("resources/data.json", "r", encoding="utf-8") as json_file:
+        with open("conf/data.json", "r", encoding="utf-8") as json_file:
             data = json.load(json_file)
         data["weibo_details"][self.weibo_details_index]["total_comment_count"] = self.total_comment_count
-        with open("resources/data.json", "w", encoding="utf-8") as json_file:
+        with open("conf/data.json", "w", encoding="utf-8") as json_file:
             # ensure Chinese characters and JSON format
             json.dump(data, json_file, ensure_ascii=False, indent=2)
 
@@ -286,20 +291,44 @@ class CommentSender:
         return [comment, timestamp]
 
     @staticmethod
-    def backup_file():
+    def backup_file(action):
         """
-        Copy the configuration and the log files to another place for safety.
+        Copy the configuration and the log files to storage for safety.
+        :param action: "copy" or "backup"
         """
-        current_dir = Path(__file__).parent.absolute()
-        target_dir = "/Volumes/home/Project/weibo-auto"
+        project_dir = Path(__file__).parent.absolute()
+        storage_dir = "/Volumes/home/Project/weibo-auto"
         copy_file = ["accounts.json", "data.json", "visibility_rate.log", "weibo-auto.log"]
         for filename in copy_file:
-            if filename.endswith(".json"):
-                copy(os.path.join(current_dir, "resources", filename), os.path.join(target_dir, filename))
-                logger_comment_sender.info(f"Backup '{filename}'")
-            elif filename.endswith(".log"):
-                copy(os.path.join(current_dir, "log", filename), os.path.join(target_dir, filename))
-                logger_comment_sender.info(f"Backup '{filename}'")
+            conf_path = os.path.join(project_dir, "conf", filename)
+            log_path = os.path.join(project_dir, "log", filename)
+            storage_path = os.path.join(storage_dir, filename)
+            if action == "copy":
+                if filename.endswith(".json"):
+                    try:
+                        copy(storage_path, conf_path)
+                        logger_comment_sender.info(f"Copy '{filename}'")
+                    except FileNotFoundError as _:
+                        logger_comment_sender.error("Fail to copy {filename}'")
+                elif filename.endswith(".log"):
+                    try:
+                        copy(storage_path, log_path)
+                        logger_comment_sender.info(f"Copy '{filename}'")
+                    except FileNotFoundError as _:
+                        logger_comment_sender.error("Fail to copy {filename}'")
+            if action == "backup":
+                if filename.endswith(".json"):
+                    try:
+                        copy(conf_path, storage_path)
+                        logger_comment_sender.info(f"Backup '{filename}'")
+                    except FileNotFoundError as _:
+                        logger_comment_sender.error("Fail to backup {filename}'")
+                elif filename.endswith(".log"):
+                    try:
+                        copy(log_path, storage_path)
+                        logger_comment_sender.info(f"Backup '{filename}'")
+                    except FileNotFoundError as _:
+                        logger_comment_sender.error("Fail to backup {filename}'")
 
 
 class CommentChecker:
