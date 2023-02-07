@@ -82,28 +82,35 @@ def backup_file(action):
         log_path = os.path.join(project_dir, "log", filename)
         storage_path = os.path.join(storage_dir, filename)
         if action == "copy":
-            if filename.endswith(".json"):
-                try:
-                    copy(storage_path, conf_path)
-                    logger_comment_sender.info(f"Copy '{filename}'")
-                except FileNotFoundError as _:
-                    logger_comment_sender.error("Fail to copy {filename}'")
-            elif filename.endswith(".log"):
+            if filename.endswith(".log"):
                 try:
                     copy(storage_path, log_path)
                     logger_comment_sender.info(f"Copy '{filename}'")
                 except FileNotFoundError as _:
                     logger_comment_sender.error("Fail to copy {filename}'")
-        if action == "backup":
-            if filename.endswith(".json"):
+            elif filename == "accounts.json":
+                if not os.path.join(Path(__file__).parent.absolute(), "conf/accounts.json"):
+                    try:
+                        copy(storage_path, conf_path)
+                        logger_comment_sender.info(f"Copy '{filename}'")
+                    except FileNotFoundError as _:
+                        logger_comment_sender.error("Fail to copy {filename}'")
+            else:
                 try:
-                    copy(conf_path, storage_path)
+                    copy(storage_path, conf_path)
+                    logger_comment_sender.info(f"Copy '{filename}'")
+                except FileNotFoundError as _:
+                    logger_comment_sender.error("Fail to copy {filename}'")
+        if action == "backup":
+            if filename.endswith(".log"):
+                try:
+                    copy(log_path, storage_path)
                     logger_comment_sender.info(f"Backup '{filename}'")
                 except FileNotFoundError as _:
                     logger_comment_sender.error("Fail to backup {filename}'")
-            elif filename.endswith(".log"):
+            elif filename.endswith(".json"):
                 try:
-                    copy(log_path, storage_path)
+                    copy(conf_path, storage_path)
                     logger_comment_sender.info(f"Backup '{filename}'")
                 except FileNotFoundError as _:
                     logger_comment_sender.error("Fail to backup {filename}'")
