@@ -45,6 +45,9 @@ def get_start_info(account_names, link_index):
     :param account_names: List[str]
     :param link_index: int
     """
+    # copy files from the storage
+    backup_file("copy")
+
     account_dict = dict()
     with open("conf/accounts.json", "r") as json_file:
         data = json.load(json_file)
@@ -56,6 +59,54 @@ def get_start_info(account_names, link_index):
         weibo_tag = data["weibo_details"][link_index]["tag"]
         total_comment_count = data["weibo_details"][link_index]["total_comment_count"]
     logging.info(f"Start {account_dict} | {{'{weibo_tag}': {total_comment_count}}} ...")
+
+
+def end():
+    """
+    Back up files in the end.
+    """
+    # backup files to the storage
+    backup_file("backup")
+
+
+def backup_file(action):
+    """
+    Copy the configuration and the log files to storage for safety.
+    :param action: "copy" or "backup"
+    """
+    project_dir = Path(__file__).parent.absolute()
+    storage_dir = "/Volumes/home/Project/weibo-auto"
+    copy_file = ["accounts.json", "data.json", "visibility_rate.log"]
+    for filename in copy_file:
+        conf_path = os.path.join(project_dir, "conf", filename)
+        log_path = os.path.join(project_dir, "log", filename)
+        storage_path = os.path.join(storage_dir, filename)
+        if action == "copy":
+            if filename.endswith(".json"):
+                try:
+                    copy(storage_path, conf_path)
+                    logger_comment_sender.info(f"Copy '{filename}'")
+                except FileNotFoundError as _:
+                    logger_comment_sender.error("Fail to copy {filename}'")
+            elif filename.endswith(".log"):
+                try:
+                    copy(storage_path, log_path)
+                    logger_comment_sender.info(f"Copy '{filename}'")
+                except FileNotFoundError as _:
+                    logger_comment_sender.error("Fail to copy {filename}'")
+        if action == "backup":
+            if filename.endswith(".json"):
+                try:
+                    copy(conf_path, storage_path)
+                    logger_comment_sender.info(f"Backup '{filename}'")
+                except FileNotFoundError as _:
+                    logger_comment_sender.error("Fail to backup {filename}'")
+            elif filename.endswith(".log"):
+                try:
+                    copy(log_path, storage_path)
+                    logger_comment_sender.info(f"Backup '{filename}'")
+                except FileNotFoundError as _:
+                    logger_comment_sender.error("Fail to backup {filename}'")
 
 
 def get_comment_details(weibo_details_index):
@@ -157,8 +208,6 @@ class CommentSender:
         """
         Run comment sender.
         """
-        # copy files from the storage
-        self.backup_file("copy")
 
         for account_name in self.account_names:
             self.account_name = account_name
@@ -177,9 +226,6 @@ class CommentSender:
 
         self.check_queue.put("All Done")
         logger_comment_sender.debug("Put 'All Done' in Queue")
-
-        # backup files to the storage
-        self.backup_file("backup")
 
     def send_and_like_comment(self):
         """
@@ -289,46 +335,6 @@ class CommentSender:
         comment = f"{random_letters[0]}{count_num}{random_emoji}{random_item[:random_num]}" \
                   f"{random_letters[1]}{random_item[random_num:]} t{timestamp}"
         return [comment, timestamp]
-
-    @staticmethod
-    def backup_file(action):
-        """
-        Copy the configuration and the log files to storage for safety.
-        :param action: "copy" or "backup"
-        """
-        project_dir = Path(__file__).parent.absolute()
-        storage_dir = "/Volumes/home/Project/weibo-auto"
-        copy_file = ["accounts.json", "data.json", "visibility_rate.log", "weibo-auto.log"]
-        for filename in copy_file:
-            conf_path = os.path.join(project_dir, "conf", filename)
-            log_path = os.path.join(project_dir, "log", filename)
-            storage_path = os.path.join(storage_dir, filename)
-            if action == "copy":
-                if filename.endswith(".json"):
-                    try:
-                        copy(storage_path, conf_path)
-                        logger_comment_sender.info(f"Copy '{filename}'")
-                    except FileNotFoundError as _:
-                        logger_comment_sender.error("Fail to copy {filename}'")
-                elif filename.endswith(".log"):
-                    try:
-                        copy(storage_path, log_path)
-                        logger_comment_sender.info(f"Copy '{filename}'")
-                    except FileNotFoundError as _:
-                        logger_comment_sender.error("Fail to copy {filename}'")
-            if action == "backup":
-                if filename.endswith(".json"):
-                    try:
-                        copy(conf_path, storage_path)
-                        logger_comment_sender.info(f"Backup '{filename}'")
-                    except FileNotFoundError as _:
-                        logger_comment_sender.error("Fail to backup {filename}'")
-                elif filename.endswith(".log"):
-                    try:
-                        copy(log_path, storage_path)
-                        logger_comment_sender.info(f"Backup '{filename}'")
-                    except FileNotFoundError as _:
-                        logger_comment_sender.error("Fail to backup {filename}'")
 
 
 class CommentChecker:
