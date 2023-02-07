@@ -49,16 +49,9 @@ $ open ~/Library/Application\ Support/Firefox/Profiles
 
 ### Firefox Login
 
-1. Open the Firefox folder to get the names of the profile.
-   ```zsh
-   $ open ~/Library/Application\ Support/Firefox/Profiles
-   ```
-
-2. Fill in the `firefox_profile` instead of "colveb6e.default-release" in `util.py`, then run `login_firefox.py`
-   to log in.
-   ```zsh
-   $ python login_firefox.py
-   ```
+```zsh
+$ python login_firefox.py
+```
 
 ### Create comments data file
 
