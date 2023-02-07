@@ -57,6 +57,11 @@ def get_start_info(account_names, link_index):
         total_comment_count = data["weibo_details"][link_index]["total_comment_count"]
     logging.info(f"Start {account_dict} | {{'{weibo_tag}': {total_comment_count}}} ...")
 
+    # save start info in the file
+    time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    with open("./log/visibility_rate.log", "a", encoding="utf-8") as file:
+        file.write(f"{time} - Start {account_dict} | {{'{weibo_tag}': {total_comment_count}}}\r")
+
     # copy files from the storage
     backup_file("copy")
 
@@ -440,7 +445,7 @@ class CommentChecker:
         logger_comment_checker.info("All accounts done")
         logger_comment_checker.info(self.accounts_check_summary)
 
-        # save account_summary in file
+        # save account_summary in the file
         time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         with open("./log/visibility_rate.log", "a", encoding="utf-8") as file:
             file.write(f"{time} - {self.accounts_check_summary}\r")
