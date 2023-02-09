@@ -45,6 +45,9 @@ def get_start_info(account_names, link_index):
     :param account_names: List[str]
     :param link_index: int
     """
+    # copy files from the storage
+    backup_file("copy")
+
     account_dict = dict()
     with open("conf/accounts.json", "r") as json_file:
         data = json.load(json_file)
@@ -61,9 +64,6 @@ def get_start_info(account_names, link_index):
     time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open("./log/visibility_rate.log", "a", encoding="utf-8") as file:
         file.write(f"{time} - Start {account_dict} | {{'{weibo_tag}': {total_comment_count}}}\r")
-
-    # copy files from the storage
-    backup_file("copy")
 
 
 def end():
