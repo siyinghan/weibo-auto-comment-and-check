@@ -89,14 +89,14 @@ def backup_file(action):
                     copy(storage_path, log_path)
                     logger_comment_sender.info(f"Copy '{filename}'")
                 except FileNotFoundError as _:
-                    logger_comment_sender.error("Fail to copy {filename}'")
+                    logger_comment_sender.error(f"Fail to copy {filename}'")
             elif filename == "accounts.json":
                 if not os.path.join(Path(__file__).parent.absolute(), "conf/accounts.json"):
                     try:
                         copy(storage_path, conf_path)
                         logger_comment_sender.info(f"Copy '{filename}'")
                     except FileNotFoundError as _:
-                        logger_comment_sender.error("Fail to copy {filename}'")
+                        logger_comment_sender.error(f"Fail to copy {filename}'")
             else:
                 try:
                     copy(storage_path, conf_path)
