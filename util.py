@@ -78,44 +78,31 @@ def backup_file(action):
     """
     project_dir = Path(__file__).parent.absolute()
     storage_dir = "/Volumes/home/Project/weibo-auto"
-    copy_file = ["accounts.json", "data.json", "visibility_rate.log"]
+    copy_file = ["conf/accounts.json", "conf/data.json", "log/visibility_rate.log"]
     for filename in copy_file:
-        conf_path = os.path.join(project_dir, "conf", filename)
-        log_path = os.path.join(project_dir, "log", filename)
+        project_path = os.path.join(project_dir, filename)
         storage_path = os.path.join(storage_dir, filename)
         if action == "copy":
-            if filename.endswith(".log"):
-                try:
-                    copy(storage_path, log_path)
-                    logger_comment_sender.info(f"Copy '{filename}'")
-                except FileNotFoundError as _:
-                    logger_comment_sender.error(f"Fail to copy '{filename}'")
-            elif filename == "accounts.json":
-                if not os.path.join(Path(__file__).parent.absolute(), "conf/accounts.json"):
+            if filename == "conf/accounts.json":
+                # do not copy "conf/accounts.json" from the storage if the project already has this file
+                if not os.path.join(Path(__file__).parent.absolute(), filename):
                     try:
-                        copy(storage_path, conf_path)
+                        copy(storage_path, project_path)
                         logger_comment_sender.info(f"Copy '{filename}'")
                     except FileNotFoundError as _:
                         logger_comment_sender.error(f"Fail to copy '{filename}'")
             else:
                 try:
-                    copy(storage_path, conf_path)
+                    copy(storage_path, project_path)
                     logger_comment_sender.info(f"Copy '{filename}'")
                 except FileNotFoundError as _:
                     logger_comment_sender.error(f"Fail to copy '{filename}'")
         if action == "backup":
-            if filename.endswith(".log"):
-                try:
-                    copy(log_path, storage_path)
-                    logger_comment_sender.info(f"Backup '{filename}'")
-                except FileNotFoundError as _:
-                    logger_comment_sender.error(f"Fail to backup '{filename}'")
-            elif filename.endswith(".json"):
-                try:
-                    copy(conf_path, storage_path)
-                    logger_comment_sender.info(f"Backup '{filename}'")
-                except FileNotFoundError as _:
-                    logger_comment_sender.error(f"Fail to backup '{filename}'")
+            try:
+                copy(project_path, storage_path)
+                logger_comment_sender.info(f"Backup '{filename}'")
+            except FileNotFoundError as _:
+                logger_comment_sender.error(f"Fail to backup '{filename}'")
 
 
 def get_comment_details(weibo_details_index):
