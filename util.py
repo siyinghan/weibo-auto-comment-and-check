@@ -96,26 +96,26 @@ def backup_file(action):
                         copy(storage_path, conf_path)
                         logger_comment_sender.info(f"Copy '{filename}'")
                     except FileNotFoundError as _:
-                        logger_comment_sender.error(f"Fail to copy {filename}'")
+                        logger_comment_sender.error(f"Fail to copy '{filename}'")
             else:
                 try:
                     copy(storage_path, conf_path)
                     logger_comment_sender.info(f"Copy '{filename}'")
                 except FileNotFoundError as _:
-                    logger_comment_sender.error(f"Fail to copy {filename}'")
+                    logger_comment_sender.error(f"Fail to copy '{filename}'")
         if action == "backup":
             if filename.endswith(".log"):
                 try:
                     copy(log_path, storage_path)
                     logger_comment_sender.info(f"Backup '{filename}'")
                 except FileNotFoundError as _:
-                    logger_comment_sender.error(f"Fail to backup {filename}'")
+                    logger_comment_sender.error(f"Fail to backup '{filename}'")
             elif filename.endswith(".json"):
                 try:
                     copy(conf_path, storage_path)
                     logger_comment_sender.info(f"Backup '{filename}'")
                 except FileNotFoundError as _:
-                    logger_comment_sender.error("Fail to backup {filename}'")
+                    logger_comment_sender.error("Fail to backup '{filename}'")
 
 
 def get_comment_details(weibo_details_index):
