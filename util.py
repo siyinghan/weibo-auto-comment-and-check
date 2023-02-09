@@ -89,7 +89,7 @@ def backup_file(action):
                     copy(storage_path, log_path)
                     logger_comment_sender.info(f"Copy '{filename}'")
                 except FileNotFoundError as _:
-                    logger_comment_sender.error(f"Fail to copy {filename}'")
+                    logger_comment_sender.error(f"Fail to copy '{filename}'")
             elif filename == "accounts.json":
                 if not os.path.join(Path(__file__).parent.absolute(), "conf/accounts.json"):
                     try:
@@ -115,7 +115,7 @@ def backup_file(action):
                     copy(conf_path, storage_path)
                     logger_comment_sender.info(f"Backup '{filename}'")
                 except FileNotFoundError as _:
-                    logger_comment_sender.error("Fail to backup '{filename}'")
+                    logger_comment_sender.error(f"Fail to backup '{filename}'")
 
 
 def get_comment_details(weibo_details_index):
