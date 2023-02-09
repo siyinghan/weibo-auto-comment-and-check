@@ -45,9 +45,6 @@ def get_start_info(account_names, link_index):
     :param account_names: List[str]
     :param link_index: int
     """
-    # copy files from the storage
-    backup_file("copy")
-
     account_dict = dict()
     with open("conf/accounts.json", "r") as json_file:
         data = json.load(json_file)
