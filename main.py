@@ -3,12 +3,14 @@ Login with different Weibo accounts.
 """
 from multiprocessing import Queue, Process
 
-from util import CommentSender, CommentChecker, get_start_info, end
+from util import CommentSender, CommentChecker, backup_file, get_start_info
 
 accounts = ["account 1", "account 2", "account 3"]
 link_index = 0
 
 if __name__ == "__main__":
+    # copy files from the storage
+    backup_file("copy")
     get_start_info(accounts, link_index)
 
     check_queue = Queue()
