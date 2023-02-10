@@ -63,14 +63,6 @@ def get_start_info(account_names, link_index):
         file.write(f"{time} - Start {account_dict} | {{'{weibo_tag}': {total_comment_count}}}\r")
 
 
-def end():
-    """
-    Back up files in the end.
-    """
-    # backup files to the storage
-    backup_file("backup")
-
-
 def backup_file(action):
     """
     Copy the configuration and the log files to storage for safety.
