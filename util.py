@@ -38,6 +38,8 @@ logging.basicConfig(
 logger_comment_sender = logging.getLogger("CS")
 logger_comment_checker = logging.getLogger("CC")
 
+weibo_login_url = "https://weibo.com/login.php"
+
 
 def get_start_info(account_names, link_index):
     """
@@ -165,7 +167,7 @@ class Login:
         Save login information in Chrome profiles for Weibo Accounts.
         """
         driver.implicitly_wait(10)
-        driver.get("https://weibo.com/login.php")
+        driver.get(weibo_login_url)
         driver.find_element(
             by=By.XPATH, value="//*[@id='pl_login_form']/div/div[1]/a").click()
         sleep(0.5)
@@ -356,6 +358,9 @@ class CommentChecker:
         """
         weibo_url = get_comment_details(self.weibo_details_index)[0]
 
+        # need to go to the login page first to log in
+        self.driver.get(weibo_login_url)
+        sleep(1)
         self.driver.get(weibo_url)
         logger_comment_checker.info(f"Open (check comments): {weibo_url}")
 
