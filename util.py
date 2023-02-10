@@ -223,7 +223,9 @@ class CommentSender:
         Input the comment and submit it.
         LIKE the comment.
         """
-
+        # need to go to the login page first to log in
+        self.driver.get(weibo_login_url)
+        sleep(1)
         self.driver.get(self.weibo_url)
         logger_comment_sender.info(f"Open (send comments - '{self.account_name}'): {self.weibo_url}")
         sleep(4)
