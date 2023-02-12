@@ -64,10 +64,6 @@ logger_comment_sender.addFilter(color_filter)
 logger_comment_checker = logging.getLogger("CC")
 logger_comment_checker.addFilter(color_filter)
 
-if __name__ == "__main__":
-    logger_comment_sender.warning("This is a warning from logger 'a'")
-    logger_comment_checker.error("This is an error from logger 'b'")
-
 weibo_login_url = "https://weibo.com/login.php"
 
 
