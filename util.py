@@ -21,6 +21,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.service import Service as FirefoxService
+from termcolor import colored
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 
@@ -35,8 +36,37 @@ logging.basicConfig(
         logging.StreamHandler(stream=sys.stdout)
     ]
 )
+
+
+class ColorFilter(logging.Filter):
+    """
+    Define a custom filter to color warnings and errors.
+    """
+
+    def filter(self, record):
+        """
+        Filter method for the logging handler to color messages based on their log level.
+        :param record: The log record to process.
+        :type record: logging.LogRecord
+        :return: A boolean indicating whether the log record should be processed or not.
+        :rtype: bool
+        """
+        if record.levelno == logging.WARNING:
+            record.msg = colored(record.msg, 'yellow')
+        elif record.levelno == logging.ERROR:
+            record.msg = colored(record.msg, 'red')
+        return True
+
+
+color_filter = ColorFilter()
 logger_comment_sender = logging.getLogger("CS")
+logger_comment_sender.addFilter(color_filter)
 logger_comment_checker = logging.getLogger("CC")
+logger_comment_checker.addFilter(color_filter)
+
+if __name__ == "__main__":
+    logger_comment_sender.warning("This is a warning from logger 'a'")
+    logger_comment_checker.error("This is an error from logger 'b'")
 
 weibo_login_url = "https://weibo.com/login.php"
 
