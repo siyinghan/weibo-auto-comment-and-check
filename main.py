@@ -1,13 +1,25 @@
 """
 Login with different Weibo accounts.
 """
-import json
+from multiprocessing import Queue, Process
 
-from util import send_comments_and_like
+from util import CommentSender, CommentChecker, backup_file, get_start_info
 
 accounts = ["account 1", "account 2", "account 3"]
+link_index = 0
 
-for key, value in json.load(open("resources/accounts.json")).items():
-    if key in accounts:
-        # leave comments without clicking the LIKE button
-        send_comments_and_like(link_index=0, account_name=key, profile=value[0], comments_number=value[1], like=False)
+if __name__ == "__main__":
+    # copy files from the storage
+    backup_file("copy")
+    get_start_info(accounts, link_index)
+
+    check_queue = Queue()
+    p1 = Process(target=CommentSender(accounts, link_index, check_queue).run, args=())
+    p2 = Process(target=CommentChecker(link_index, check_queue).run, args=())
+    p1.start()
+    p2.start()
+    p1.join()
+    p2.join()
+
+    # backup files to the storage
+    backup_file("backup")
